@@ -6,7 +6,7 @@ import {
   asanaClient,
   Task,
 } from "../models/task";
-import { IN_PROGRESS_SECTION_ID } from "../config/env"; // Import the centralized variable
+import { IN_PROGRESS_SECTION_ID } from "../config/env";
 
 const router = express.Router();
 
@@ -21,28 +21,17 @@ router.post("/tasks", async (req: Request, res: Response): Promise<void> => {
 
   const dueDate = calculateDueDate(priority);
 
-  try {
-    const response = await asanaClient.post("/tasks", {
-      name,
-      due_on: dueDate,
-      workspace: "your_workspace_id", // Replace with your Asana workspace ID
-      assignee: "me", // Or replace with a specific user ID or email
-    });
+  const response = await asanaClient.post("/tasks", {
+    name,
+    due_on: dueDate,
+    workspace: "your_workspace_id", // Replace with your Asana workspace ID
+    assignee: "me", // Or replace with a specific user ID or email
+  });
 
-    res.status(201).json({
-      message: "Task created successfully with due date assigned.",
-      task: response.data.data,
-    });
-  } catch (error: any) {
-    console.error(
-      "Error creating task:",
-      error.response?.data || error.message
-    );
-    res.status(500).json({
-      error: "Failed to create task in Asana",
-      details: error.response?.data || error.message,
-    });
-  }
+  res.status(201).json({
+    message: "Task created successfully with due date assigned.",
+    task: response.data.data,
+  });
 });
 
 // Move a task to "In Progress" and handle updates
@@ -51,7 +40,6 @@ router.patch(
   async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
 
-    // Fetch the task details
     const taskResponse = await asanaClient.get(`/tasks/${id}`, {
       params: { opt_fields: "name,priority,due_on" },
     });
@@ -92,12 +80,9 @@ router.patch(
 );
 
 // Get all tasks in "In Progress"
-router.get(
-  "/tasks/in-progress",
-  async (req: Request, res: Response): Promise<void> => {
-    const tasks = await fetchInProgressTasks();
-    res.status(200).json(tasks);
-  }
-);
+router.get("/tasks/in-progress", async (req: Request, res: Response) => {
+  const tasks = await fetchInProgressTasks();
+  res.status(200).json(tasks);
+});
 
 export default router;
