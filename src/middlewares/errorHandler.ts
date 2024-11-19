@@ -1,9 +1,35 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 
-export const errorHandler = (err: any, req: Request, res: Response) => {
+export class AppError extends Error {
+  public status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+export const errorHandler = (
+  err: AppError | any,
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
   console.error(`[Error]: ${err.message}`);
-  res.status(err.status || 500).json({
+
+  const statusCode = err.status || 500;
+  const errorMessage = err.message || "Internal Server Error";
+
+  // Check for Axios errors (from Asana API)
+  const errors = err.response?.data?.errors?.map((error: any) => ({
+    reason: error.message,
+    help: error.help,
+  }));
+
+  res.status(statusCode).json({
     success: false,
-    error: err.message || "Internal Server Error",
+    message: errorMessage,
+    errors: errors || null,
   });
 };
