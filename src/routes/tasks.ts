@@ -19,7 +19,22 @@ router.post("/tasks", async (req: Request, res: Response) => {
     throw new AppError(400, "Name and priority are required.");
   }
 
-  const projectIds = Array.isArray(projects) ? projects : ["1208796267729729"];
+  const projectIds = Array.isArray(projects) ? projects : ["1208796267729729"]; // Default project ID
+
+  // Explicitly type the priority map
+  const priorityGidMap: Record<string, string> = {
+    Low: "1208796267729735",
+    Medium: "1208796267729736",
+    High: "1208796267729737",
+  };
+
+  // Explicitly assert that `priority` is of a valid key type
+  if (!priorityGidMap[priority]) {
+    throw new AppError(
+      400,
+      "Invalid priority value. Must be 'Low', 'Medium', or 'High'."
+    );
+  }
 
   const dueDate = calculateDueDate(priority);
 
@@ -28,11 +43,14 @@ router.post("/tasks", async (req: Request, res: Response) => {
       name,
       projects: projectIds,
       due_on: dueDate,
+      custom_fields: {
+        "1208796267729734": priorityGidMap[priority], // Set Priority
+      },
     },
   });
 
   res.status(201).json({
-    message: "Task created successfully with due date assigned.",
+    message: "Task created successfully with due date and priority assigned.",
     task: response.data.data,
   });
 });
