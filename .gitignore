@@ -1,0 +1,43 @@
+# Node.js
+node_modules/
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs
+logs/
+*.log
+
+# Build output
+dist/
+out/
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.*.local
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*.DS_Store
+
+# MacOS
+.DS_Store
+
+# Optional lockfiles
+package-lock.json
+yarn.lock
+
+# Temporary files
+tmp/
+temp/
+
+# Coverage files
+coverage/
+.nyc_output/
