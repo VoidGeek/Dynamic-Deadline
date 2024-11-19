@@ -6,7 +6,14 @@ import {
   asanaClient,
   Task,
 } from "../models/task";
-import { IN_PROGRESS_SECTION_ID } from "../config/env";
+import {
+  IN_PROGRESS_SECTION_ID,
+  DEFAULT_PROJECT_ID,
+  PRIORITY_CUSTOM_FIELD_ID,
+  PRIORITY_LOW_ID,
+  PRIORITY_MEDIUM_ID,
+  PRIORITY_HIGH_ID,
+} from "../config/env";
 import { AppError } from "../middlewares/errorHandler";
 
 const router = express.Router();
@@ -19,16 +26,14 @@ router.post("/tasks", async (req: Request, res: Response) => {
     throw new AppError(400, "Name and priority are required.");
   }
 
-  const projectIds = Array.isArray(projects) ? projects : ["1208796267729729"]; // Default project ID
+  const projectIds = Array.isArray(projects) ? projects : [DEFAULT_PROJECT_ID];
 
-  // Explicitly type the priority map
   const priorityGidMap: Record<string, string> = {
-    Low: "1208796267729735",
-    Medium: "1208796267729736",
-    High: "1208796267729737",
+    Low: PRIORITY_LOW_ID,
+    Medium: PRIORITY_MEDIUM_ID,
+    High: PRIORITY_HIGH_ID,
   };
 
-  // Explicitly assert that `priority` is of a valid key type
   if (!priorityGidMap[priority]) {
     throw new AppError(
       400,
@@ -44,7 +49,7 @@ router.post("/tasks", async (req: Request, res: Response) => {
       projects: projectIds,
       due_on: dueDate,
       custom_fields: {
-        "1208796267729734": priorityGidMap[priority], // Set Priority
+        [PRIORITY_CUSTOM_FIELD_ID]: priorityGidMap[priority],
       },
     },
   });
