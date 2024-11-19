@@ -1,14 +1,21 @@
-import express, { Request, Response } from "express";
+import express from "express";
+import dotenv from "dotenv";
+import taskRoutes from "./routes/tasks";
+import { errorHandler } from "./middlewares/errorHandler";
+
+dotenv.config();
 
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-app.get("/", (req: Request, res: Response) => {
-  res.send("Hello, TypeScript with Express!");
-});
+// Routes
+app.use("/api", taskRoutes);
 
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
+// Centralized Error Handling Middleware
+app.use(errorHandler);
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
