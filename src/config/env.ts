@@ -13,16 +13,24 @@ const requiredEnvVariables = [
   "PRIORITY_HIGH_ID",
 ];
 
-// Function to validate and retrieve environment variables
-const getEnvVariable = (key: string): string => {
-  const value = process.env[key];
-  if (!value) {
-    throw new Error(`${key} is not defined in environment variables`);
-  }
-  return value;
+// Function to validate environment variables
+const validateEnvVariables = (): void => {
+  requiredEnvVariables.forEach((key) => {
+    if (!process.env[key]) {
+      throw new Error(`${key} is not defined in environment variables`);
+    }
+  });
 };
 
-// Load and export environment variables
+// Call validation function
+validateEnvVariables();
+
+// Function to retrieve a specific environment variable
+const getEnvVariable = (key: string): string => {
+  return process.env[key] as string;
+};
+
+// Export environment variables
 export const ASANA_ACCESS_TOKEN = getEnvVariable("ASANA_ACCESS_TOKEN");
 export const IN_PROGRESS_SECTION_ID = getEnvVariable("IN_PROGRESS_SECTION_ID");
 export const DEFAULT_PROJECT_ID = getEnvVariable("DEFAULT_PROJECT_ID");

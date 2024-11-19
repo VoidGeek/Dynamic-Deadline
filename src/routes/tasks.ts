@@ -103,7 +103,7 @@ router.patch("/tasks/:id/progress", async (req: Request, res: Response) => {
 });
 
 // Get all tasks in "In Progress"
-router.get("/tasks/in-progress", async (req: Request, res: Response) => {
+router.get("/tasks/in-progress", async (res: Response) => {
   const tasks = await fetchInProgressTasks();
   res.status(200).json(tasks);
 });
