@@ -1,42 +1,16 @@
-import dotenv from "dotenv";
+import { config } from "dotenv-safe";
 
-dotenv.config();
+// Load and validate environment variables
+config({
+  allowEmptyValues: false, // Ensure no variable is empty unless explicitly allowed
+  example: ".env.example", // Path to the .env.example file for validation
+});
 
-// List of required environment variables
-const requiredEnvVariables = [
-  "ASANA_ACCESS_TOKEN",
-  "IN_PROGRESS_SECTION_ID",
-  "DEFAULT_PROJECT_ID",
-  "PRIORITY_CUSTOM_FIELD_ID",
-  "PRIORITY_LOW_ID",
-  "PRIORITY_MEDIUM_ID",
-  "PRIORITY_HIGH_ID",
-];
-
-// Function to validate environment variables
-const validateEnvVariables = (): void => {
-  requiredEnvVariables.forEach((key) => {
-    if (!process.env[key]) {
-      throw new Error(`${key} is not defined in environment variables`);
-    }
-  });
-};
-
-// Call validation function
-validateEnvVariables();
-
-// Function to retrieve a specific environment variable
-const getEnvVariable = (key: string): string => {
-  return process.env[key] as string;
-};
-
-// Export environment variables
-export const ASANA_ACCESS_TOKEN = getEnvVariable("ASANA_ACCESS_TOKEN");
-export const IN_PROGRESS_SECTION_ID = getEnvVariable("IN_PROGRESS_SECTION_ID");
-export const DEFAULT_PROJECT_ID = getEnvVariable("DEFAULT_PROJECT_ID");
-export const PRIORITY_CUSTOM_FIELD_ID = getEnvVariable(
-  "PRIORITY_CUSTOM_FIELD_ID"
-);
-export const PRIORITY_LOW_ID = getEnvVariable("PRIORITY_LOW_ID");
-export const PRIORITY_MEDIUM_ID = getEnvVariable("PRIORITY_MEDIUM_ID");
-export const PRIORITY_HIGH_ID = getEnvVariable("PRIORITY_HIGH_ID");
+// Directly export environment variables
+export const ASANA_ACCESS_TOKEN = process.env.ASANA_ACCESS_TOKEN!;
+export const IN_PROGRESS_SECTION_ID = process.env.IN_PROGRESS_SECTION_ID!;
+export const DEFAULT_PROJECT_ID = process.env.DEFAULT_PROJECT_ID!;
+export const PRIORITY_CUSTOM_FIELD_ID = process.env.PRIORITY_CUSTOM_FIELD_ID!;
+export const PRIORITY_LOW_ID = process.env.PRIORITY_LOW_ID!;
+export const PRIORITY_MEDIUM_ID = process.env.PRIORITY_MEDIUM_ID!;
+export const PRIORITY_HIGH_ID = process.env.PRIORITY_HIGH_ID!;
