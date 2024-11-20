@@ -15,7 +15,14 @@ import {
 } from "../config/env";
 import { AppError } from "../middlewares/errorHandler";
 
-// Create a task with an assigned due date
+// Priority Mapping
+const priorityGidMap: Record<string, string> = {
+  Low: PRIORITY_LOW_ID,
+  Medium: PRIORITY_MEDIUM_ID,
+  High: PRIORITY_HIGH_ID,
+};
+
+// Create a task with assigned due date and priority
 export const createTask = async (req: Request, res: Response) => {
   const { name, priority, projects } = req.body;
 
@@ -25,16 +32,10 @@ export const createTask = async (req: Request, res: Response) => {
 
   const projectIds = Array.isArray(projects) ? projects : [DEFAULT_PROJECT_ID];
 
-  const priorityGidMap: Record<string, string> = {
-    Low: PRIORITY_LOW_ID,
-    Medium: PRIORITY_MEDIUM_ID,
-    High: PRIORITY_HIGH_ID,
-  };
-
   if (!priorityGidMap[priority]) {
     throw new AppError(
       400,
-      "Invalid priority value. Must be 'Low', 'Medium', or 'High'."
+      "Invalid priority. Allowed values: 'Low', 'Medium', 'High'."
     );
   }
 
@@ -52,12 +53,12 @@ export const createTask = async (req: Request, res: Response) => {
   });
 
   res.status(201).json({
-    message: "Task created successfully with due date and priority assigned.",
+    message: "Task created successfully.",
     task: response.data.data,
   });
 };
 
-// Move a task to "In Progress" and handle updates
+// Move a task to "In Progress" section
 export const moveTaskToInProgress = async (req: Request, res: Response) => {
   const { id } = req.params;
 
@@ -71,9 +72,7 @@ export const moveTaskToInProgress = async (req: Request, res: Response) => {
   }
 
   await asanaClient.post(`/sections/${IN_PROGRESS_SECTION_ID}/addTask`, {
-    data: {
-      task: id,
-    },
+    data: { task: id },
   });
 
   if (task.priority === "High") {
@@ -93,13 +92,11 @@ export const moveTaskToInProgress = async (req: Request, res: Response) => {
     );
   }
 
-  res.status(200).json({
-    message: "Task moved to In Progress and updated successfully.",
-  });
+  res.status(200).json({ message: "Task moved to In Progress successfully." });
 };
 
-// Get all tasks in "In Progress"
-export const getInProgressTasks = async (req: Request, res: Response) => {
+// Fetch all tasks in "In Progress" section
+export const getInProgressTasks = async (_req: Request, res: Response) => {
   const tasks = await fetchInProgressTasks();
   res.status(200).json(tasks);
 };
@@ -114,7 +111,6 @@ export const getTasksByProject = async (req: Request, res: Response) => {
 
   res.status(200).json({
     success: true,
-    message: `Tasks fetched successfully for project ID: ${projectId}`,
     tasks: response.data.data,
   });
 };
