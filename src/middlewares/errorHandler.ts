@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { Request, Response, NextFunction } from "express";
 
 export class AppError extends Error {
   public status: number;
@@ -10,21 +10,46 @@ export class AppError extends Error {
   }
 }
 
-export const errorHandler = (err: AppError | any, res: Response): void => {
-  console.error(`[Error]: ${err.message}`);
+export const errorHandler = (
+  err: unknown,
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  // Default status and message
+  let statusCode = err instanceof AppError ? err.status : 500;
+  let errorMessage =
+    err instanceof Error ? err.message : "Internal Server Error";
+  let errors: { reason: string; help?: string }[] | null = null;
 
-  const statusCode = err.status || 500;
-  const errorMessage = err.message || "Internal Server Error";
+  // Handle Axios errors
+  if ((err as any)?.response) {
+    const axiosError = err as any;
+    statusCode = axiosError.response.status || 500; // Use Axios response status
+    errorMessage = axiosError.response.statusText || errorMessage;
 
-  // Check for Axios errors (from Asana API)
-  const errors = err.response?.data?.errors?.map((error: any) => ({
-    reason: error.message,
-    help: error.help,
-  }));
+    // Extract detailed error information
+    const axiosErrors = axiosError.response.data?.errors;
+    errors = axiosErrors
+      ? axiosErrors.map(
+          ({ message, help }: { message: string; help?: string }) => ({
+            reason: message,
+            help,
+          })
+        )
+      : null;
+  }
 
+  // Log the error in development mode
+  if (process.env.NODE_ENV === "development") {
+    console.error(`[Error]: ${errorMessage}`);
+  }
+
+  // Send response
   res.status(statusCode).json({
     success: false,
-    message: errorMessage,
-    errors: errors || null,
+    status: statusCode,
+    message: errors ? "Detailed errors are available" : errorMessage,
+    errors: errors || undefined,
   });
 };
