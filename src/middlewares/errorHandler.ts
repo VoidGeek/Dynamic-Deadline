@@ -40,10 +40,12 @@ export const errorHandler = (
       : null;
   }
 
-  // Log the error in development mode
-  if (process.env.NODE_ENV === "development") {
-    console.error(`[Error]: ${errorMessage}`);
-  }
+  // Log the error
+  logMessage(
+    "ERROR",
+    `[${req.method}] ${req.originalUrl} - ${errorMessage}`,
+    undefined
+  );
 
   // Send response
   res.status(statusCode).json({

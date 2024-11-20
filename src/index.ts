@@ -1,7 +1,8 @@
+import "./config/global-utils"; // Initialize global utilities
+import "./config/global-env";
 import express from "express";
 import taskRoutes from "./routes/taskRouter";
 import { errorHandler } from "./middlewares/errorHandler";
-import kleur from "kleur";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,9 +16,5 @@ app.use("/api", taskRoutes);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(
-    `${kleur.yellow("[info]")} ${kleur.grey("server running at")} ${kleur
-      .green()
-      .underline(`http://localhost:${PORT}`)}`
-  );
+  logMessage("info", "server running at", `http://localhost:${PORT}`);
 });
