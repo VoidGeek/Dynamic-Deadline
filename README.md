@@ -117,3 +117,4 @@ Ensure you have the following installed on your system:
 
    - Centralized error handling for API failures and invalid requests.
    - User-friendly error messages with proper HTTP status codes.
+
