@@ -5,6 +5,7 @@ import {
   fetchInProgressTasks,
   updateTaskDueDate,
 } from "../services/taskService";
+import { Task } from "../interfaces/task";
 
 const priorityGidMap: Record<string, string> = {
   Low: process.env.PRIORITY_LOW_ID!,
@@ -12,8 +13,18 @@ const priorityGidMap: Record<string, string> = {
   High: process.env.PRIORITY_HIGH_ID!,
 };
 
+// Define the request body structure for `createTask`
+interface CreateTaskRequest {
+  name: string;
+  priority: "Low" | "Medium" | "High";
+  projects?: string[];
+}
+
 // Create a task with assigned due date and priority
-export const createTask = async (req: Request, res: Response) => {
+export const createTask = async (
+  req: Request<any, any, CreateTaskRequest>,
+  res: Response
+) => {
   const { name, priority, projects } = req.body;
 
   if (!name || !priority) {
@@ -48,13 +59,18 @@ export const createTask = async (req: Request, res: Response) => {
 };
 
 // Move a task to "In Progress" section
-export const moveTaskToInProgress = async (req: Request, res: Response) => {
+export const moveTaskToInProgress = async (
+  req: Request<{ id: string }>,
+  res: Response
+) => {
   const { id } = req.params;
 
-  const taskResponse = await asanaClient.get(`/tasks/${id}`, {
-    params: { opt_fields: "name,priority,due_on" },
-  });
-  const task = taskResponse.data.data;
+  // Destructure the `Task` object directly from the API response
+  const { data: task } = (
+    await asanaClient.get<{ data: Task }>(`/tasks/${id}`, {
+      params: { opt_fields: "gid,name,due_on,priority" },
+    })
+  ).data;
 
   if (!task) {
     throw new AppError(404, "Task not found.");
@@ -94,12 +110,19 @@ export const getInProgressTasks = async (_req: Request, res: Response) => {
 };
 
 // Fetch tasks for a specific project
-export const getTasksByProject = async (req: Request, res: Response) => {
+export const getTasksByProject = async (
+  req: Request<{ projectId: string }>,
+  res: Response
+) => {
   const { projectId } = req.params;
 
-  const response = await asanaClient.get("/tasks", {
-    params: { project: projectId },
-  });
+  // Fetch tasks for the project
+  const { data: tasks } = (
+    await asanaClient.get<{ data: Task[] }>("/tasks", {
+      params: { project: projectId },
+    })
+  ).data;
 
-  sendResponse(res, 200, "Fetched tasks for the project.", response.data.data);
+  // Send the tasks directly without additional wrapping
+  sendResponse(res, 200, "Fetched tasks for the project.", tasks);
 };
