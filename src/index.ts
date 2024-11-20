@@ -1,7 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
-import taskRoutes from "./routes/tasks";
+import taskRoutes from "./routes/taskRouter";
 import { errorHandler } from "./middlewares/errorHandler";
+import kleur from "kleur";
 
 dotenv.config();
 
@@ -17,5 +18,9 @@ app.use("/api", taskRoutes);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(
+    `${kleur.yellow("[info]")} ${kleur.grey("server running at")} ${kleur
+      .green()
+      .underline(`http://localhost:${PORT}`)}`
+  );
 });
