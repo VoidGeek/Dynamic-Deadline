@@ -18,7 +18,7 @@ A Node.js API for managing tasks in Asana, built with Express.js, TypeScript, an
 Ensure you have the following installed on your system:
 
 - **Node.js**: Version 14.x or higher
-- **Express.js**: Version 5.x
+- **Express.js**: Version 5.xx
 - **TypeScript**: ES2020 support
 - **PNPM**: Latest version
 - **Environment Variables**:
@@ -72,55 +72,48 @@ Ensure you have the following installed on your system:
    pnpm clean
    ```
 
+---
+
 ## **Scripts**
 
-- `pnpm dev` - Runs the application in development mode using `nodemon` to monitor changes in `src/index.ts`.
+- `pnpm dev` - Runs the application in development mode using `ts-node-dev` with hot-reloading.
+- `pnpm dev:strict` - Runs a full TypeScript type-check (`tsc --noEmit`) and then starts the development server.
 - `pnpm build` - Compiles the TypeScript source code into JavaScript.
 - `pnpm start` - Runs the compiled application in production mode from `dist/index.js`.
-- `pnpm test` - Placeholder for testing, currently outputs an error message.
-- `pnpm clean` - Deletes the `dist` directory and removes all
-  `.js` files in the `src` directory.
+- `pnpm clean` - Deletes the `dist` directory and removes compiled `.js` files.
 
 ---
 
 ## **Features**
 
-1. **Task Creation**:
+1. **Global Utilities**:
 
-   - Create tasks with due dates, priorities, and optional project assignment.
+   - `AppError`: Centralized error-handling class for consistent API error responses.
+   - `sendResponse`: Standardized response utility for returning consistent JSON responses.
+   - `logMessage`: A structured, color-coded logging utility for enhanced debugging.
+
+2. **Task Creation**:
+
+   - Create tasks with due dates, priorities, and optional project assignments.
    - Automatically assigns tasks to the default project if no project ID is provided.
    - Supports priority customization using pre-defined fields.
 
-2. **Task Progress Management**:
+3. **Task Progress Management**:
 
    - Move tasks to the "In Progress" section for better tracking.
    - Supports real-time updates with Asana API integration.
 
-3. **Task Retrieval**:
+4. **Task Retrieval**:
 
    - Fetch all tasks from a specific project.
    - Retrieve tasks that are currently in the "In Progress" section.
 
-4. **Custom Priority Management**:
+5. **Custom Priority Management**:
 
-   - Use priority levels (`low`, `medium`, `high`) to organize tasks effectively.
+   - Use priority levels (`Low`, `Medium`, `High`) to organize tasks effectively.
    - Custom field IDs for priorities are configurable via environment variables.
 
-5. **Error Handling**:
+6. **Error Handling**:
 
    - Centralized error handling for API failures and invalid requests.
    - User-friendly error messages with proper HTTP status codes.
-
-6. **Production-Ready**:
-   - Fully TypeScript-typed for stability and scalability.
-   - Easy to deploy using Node.js and Asana API authentication.
-
----
-
-## **License**
-
-MIT License
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software, to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
