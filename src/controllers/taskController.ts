@@ -15,7 +15,6 @@ const priorityGidMap: Record<string, string> = {
   High: process.env.PRIORITY_HIGH_ID!,
 };
 
-// Create a task with assigned due date and priority
 export const createTask = async (
   req: Request<any, any, CreateTaskRequest>,
   res: Response
@@ -45,19 +44,20 @@ export const createTask = async (
       projects: projectIds,
       due_on: dueDate,
       custom_fields: {
-        [process.env.PRIORITY_CUSTOM_FIELD_ID!]: priorityGidMap[priority],
+        [process.env.PRIORITY_CUSTOM_FIELD_ID!]: priorityGidMap[priority], // Set priority
+        [process.env.EXTENSION_PROCESSED_FIELD_ID!]: "1208809657512866", // Set "false" for Extension Processed
       },
     },
   });
 
   logMessage(
     "INFO",
-    `Task "${name}" created successfully with priority "${priority}" and due date "${dueDate}".`
+    `Task "${name}" created successfully with priority "${priority}", due date "${dueDate}", and Extension Processed set to "false".`
   );
   sendResponse(res, 201, "Task created successfully.", response.data.data);
 };
 
-// Move a task to the "In Progress" section
+
 export const moveTaskToInProgress = async (
   req: Request<{ id: string }>,
   res: Response
@@ -68,7 +68,7 @@ export const moveTaskToInProgress = async (
   logMessage("DEBUG", `Fetching task with ID: ${id}`);
   const { data: task } = (
     await asanaClient.get<{ data: Task }>(`/tasks/${id}`, {
-      params: { opt_fields: "gid,name,due_on,custom_fields" }, // Include custom_fields for priority
+      params: { opt_fields: "gid,name,due_on,custom_fields" },
     })
   ).data;
 
@@ -76,8 +76,10 @@ export const moveTaskToInProgress = async (
     throw new AppError(404, "Task not found.");
   }
 
-  // Extract priority from custom fields
+  // Extract priority and extension_processed status from custom fields
   const priorityFieldId = process.env.PRIORITY_CUSTOM_FIELD_ID!;
+  const extensionFieldId = process.env.EXTENSION_PROCESSED_FIELD_ID!;
+
   const priority = task.custom_fields?.find(
     (field: CustomField) => field.gid === priorityFieldId
   )?.enum_value?.name;
@@ -117,22 +119,81 @@ export const moveTaskToInProgress = async (
       `Fetched ${inProgressTasks.length} tasks currently in the "In Progress" section`
     );
 
-    // Update the due dates of other tasks in progress
+    // Filter and update only eligible tasks
+    const tasksToUpdate = inProgressTasks.filter((t) => {
+      logMessage(
+        "DEBUG",
+        `Evaluating task "${t.name}" (ID: ${t.gid}) for updates.`
+      );
+
+      const priorityField = t.custom_fields?.find(
+        (field: CustomField) =>
+          field.gid === process.env.PRIORITY_CUSTOM_FIELD_ID
+      );
+      const extensionField = t.custom_fields?.find(
+        (field: CustomField) =>
+          field.gid === process.env.EXTENSION_PROCESSED_FIELD_ID
+      );
+
+      // Extract priority and extension processed values safely
+      const tPriority = priorityField?.enum_value?.name || "None";
+      const isExtensionProcessed =
+        extensionField?.enum_value?.gid === "1208809657512865"; // Check if "true" enum GID is set
+
+      logMessage(
+        "DEBUG",
+        `Task "${t.name}" - Priority: ${tPriority}, Extension Processed: ${
+          isExtensionProcessed ? "true" : "false"
+        }`
+      );
+
+      // Skip tasks with High priority or already processed
+      if (tPriority === "High" || isExtensionProcessed) {
+        logMessage(
+          "INFO",
+          `Skipping task "${t.name}" (ID: ${t.gid}) - ${
+            tPriority === "High" ? "High priority" : "Already processed"
+          }.`
+        );
+        return false;
+      }
+
+      return true;
+    });
+
+    logMessage(
+      "INFO",
+      `Found ${tasksToUpdate.length} tasks eligible for due date extension.`
+    );
+
+    // Update the due dates of eligible tasks
     await Promise.all(
-      inProgressTasks
-        .filter((t) => t.gid !== id) // Exclude the current task
-        .map((t) => {
-          const extendedDate = new Date(t.due_on || new Date());
-          extendedDate.setDate(extendedDate.getDate() + 2); // Extend due date by 2 days
-          const newDueDate = extendedDate.toISOString().split("T")[0];
+      tasksToUpdate.map(async (t) => {
+        const extendedDate = new Date(t.due_on || new Date());
+        extendedDate.setDate(extendedDate.getDate() + 2); // Extend due date by 2 days
+        const newDueDate = extendedDate.toISOString().split("T")[0];
 
-          logMessage(
-            "INFO",
-            `Extending due date for task: "${t.name}" (ID: ${t.gid}), Old Due Date: ${t.due_on}, New Due Date: ${newDueDate}`
-          );
+        logMessage(
+          "INFO",
+          `Extending due date for task: "${t.name}" (ID: ${t.gid}), Old Due Date: ${t.due_on}, New Due Date: ${newDueDate}`
+        );
 
-          return updateTaskDueDate(t.gid, newDueDate);
-        })
+        await updateTaskDueDate(t.gid, newDueDate);
+
+        // Mark the task as "extension_processed"
+        await asanaClient.put(`/tasks/${t.gid}`, {
+          data: {
+            custom_fields: {
+              [extensionFieldId]: "1208809657512865", // Set to "true" using GID
+            },
+          },
+        });
+
+        logMessage(
+          "INFO",
+          `Marked task "${t.name}" (ID: ${t.gid}) as extension processed.`
+        );
+      })
     );
   }
 
