@@ -7,6 +7,12 @@ import {
 } from "../services/taskService";
 import { Task, CreateTaskRequest, CustomField } from "../interfaces/task"; // Import interfaces
 
+const VALID_PRIORITIES: CreateTaskRequest["priority"][] = [
+  "Low",
+  "Medium",
+  "High",
+];
+
 const priorityGidMap: Record<string, string> = {
   Low: process.env.PRIORITY_LOW_ID!,
   Medium: process.env.PRIORITY_MEDIUM_ID!,
@@ -14,47 +20,68 @@ const priorityGidMap: Record<string, string> = {
 };
 
 export const createTask = async (
-  req: Request<any, any, CreateTaskRequest>,
+  req: Request<any, any, Partial<CreateTaskRequest>>, // Accept Partial to allow missing fields
   res: Response
 ) => {
-  const { name, priority, projects } = req.body;
+  const { name, projects, priority } = req.body; // No default for priority here
 
-  if (!name || !priority) {
-    throw new AppError(400, "Name and priority are required.");
+  if (!name) {
+    throw new AppError(400, "Name is required.");
   }
 
+  // Validate the priority
+  if (priority && !VALID_PRIORITIES.includes(priority)) {
+    throw new AppError(
+      400,
+      `Invalid priority. Allowed values: ${VALID_PRIORITIES.join(", ")}.`
+    );
+  }
+
+  // Ensure projects array exists or use the default project
   const projectIds = Array.isArray(projects)
     ? projects
     : [process.env.DEFAULT_PROJECT_ID!];
 
-  if (!priorityGidMap[priority]) {
-    throw new AppError(
-      400,
-      "Invalid priority. Allowed values: 'Low', 'Medium', 'High'."
-    );
+  // Calculate due date only if priority is provided
+  const dueDate = priority ? calculateDueDate(priority) : undefined;
+
+  // Map custom fields
+  const customFields: Record<string, string> = {
+    [process.env.EXTENSION_PROCESSED_FIELD_ID!]: process.env.FALSE_ENUM_GID!, // Set "false" for Extension Processed
+  };
+
+  // Add priority to custom fields if provided
+  if (priority) {
+    customFields[process.env.PRIORITY_CUSTOM_FIELD_ID!] =
+      priorityGidMap[priority];
   }
 
-  const dueDate = calculateDueDate(priority);
+  const memberships = projectIds.map((projectId) => ({
+    project: projectId,
+    section: process.env.DEFAULT_SECTION_ID!, // Use the default section ID from environment variables
+  }));
 
-  const response = await asanaClient.post("/tasks", {
-    data: {
-      name,
-      projects: projectIds,
-      due_on: dueDate,
-      custom_fields: {
-        [process.env.PRIORITY_CUSTOM_FIELD_ID!]: priorityGidMap[priority], // Set priority
-        [process.env.EXTENSION_PROCESSED_FIELD_ID!]: "1208809657512866", // Set "false" for Extension Processed
-      },
-    },
-  });
+  // Prepare the payload for the Asana API
+  const data: Record<string, any> = {
+    name,
+    projects: projectIds,
+    memberships,
+    custom_fields: customFields,
+    ...(dueDate && { due_on: dueDate }), // Include due date only if it exists
+  };
+
+  // Send the API request to create the task
+  const response = await asanaClient.post("/tasks", { data });
 
   logMessage(
     "INFO",
-    `Task "${name}" created successfully with priority "${priority}", due date "${dueDate}", and Extension Processed set to "false".`
+    `Task "${name}" created successfully in projects "${projectIds.join(
+      ", "
+    )}"${dueDate ? ` with due date "${dueDate}"` : ""}.`
   );
+
   sendResponse(res, 201, "Task created successfully.", response.data.data);
 };
-
 
 export const moveTaskToInProgress = async (
   req: Request<{ id: string }>,
