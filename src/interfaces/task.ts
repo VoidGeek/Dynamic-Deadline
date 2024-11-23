@@ -9,9 +9,9 @@ export interface Task {
 }
 
 export interface CreateTaskRequest {
-  name: string;
-  priority: "Low" | "Medium" | "High";
-  projects?: string[];
+  name: string; // Name of the task (required)
+  priority?: "Low" | "Medium" | "High"; // Priority of the task (optional)
+  projects?: string[]; // List of project IDs (optional)
 }
 
 export interface CustomField {
