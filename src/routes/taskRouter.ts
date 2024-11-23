@@ -1,4 +1,4 @@
-import express from "express";
+import { createRouter } from "../utils/wrappedRouter"; // Use the wrapped router
 import {
   createTask,
   moveTaskToInProgress,
@@ -6,7 +6,7 @@ import {
   getTasksByProject,
 } from "../controllers/taskController";
 
-const router = express.Router();
+const router = createRouter(); // Use `createRouter` instead of `Router`
 
 // Create a task with an assigned due date
 router.post("/tasks", createTask);
