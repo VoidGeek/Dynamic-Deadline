@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { AppError as AppErrorClass } from "../middlewares/errorHandler"; // Adjust the path as needed
 import { logMessage as logMessageUtil } from "../utils/logger"; // Import logMessage utility
+import { createRouter as createRouterUtil } from "../utils/wrappedRouter";
 
 // Attach global utilities
 globalThis.sendResponse = (
@@ -18,6 +19,7 @@ globalThis.sendResponse = (
 
 globalThis.AppError = AppErrorClass;
 globalThis.logMessage = logMessageUtil; // Attach logMessage to globalThis
+globalThis.createRouter = createRouterUtil;
 
 logMessageUtil("DEBUG", "Global utilities initialized.");
 

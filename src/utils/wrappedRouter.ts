@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { registerRoute } from "./routeRegistry";
+import { routeRegistry } from "../config/routeRegistry";
 
 /**
  * Creates a wrapped Router that automatically registers routes.
@@ -17,8 +17,8 @@ export const createRouter = (): Router => {
 
     // Override the method to include route registration
     (router as any)[method] = (path: string, ...handlers: any[]) => {
-      // Register the route in the centralized registry
-      registerRoute(method.toUpperCase(), path);
+      // Use the correct `register` method of `routeRegistry`
+      routeRegistry.register(method.toUpperCase(), path);
 
       // Call the original Router method to define the route
       return originalMethod(path, ...handlers);
