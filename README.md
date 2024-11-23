@@ -23,16 +23,24 @@ Ensure you have the following installed on your system:
 - **PNPM**: Latest version
 - **Environment Variables**:
 
-  - Create a `.env` file in the `src/config/` directory with the following:
+  - Create a `.env` file in the root directory with the following:
+  - Refer the .env.example which was done through dotenv-safe.
 
     ```env
-    ASANA_ACCESS_TOKEN=your_asana_access_token
-    IN_PROGRESS_SECTION_ID=your_section_id
-    DEFAULT_PROJECT_ID=your_default_project_id
-    PRIORITY_CUSTOM_FIELD_ID=your_custom_field_id
-    PRIORITY_LOW_ID=your_low_priority_id
-    PRIORITY_MEDIUM_ID=your_medium_priority_id
-    PRIORITY_HIGH_ID=your_high_priority_id
+    ASANA_ACCESS_TOKEN=
+    IN_PROGRESS_SECTION_ID=
+    PORT=
+
+    DEFAULT_PROJECT_ID=
+    WORKSPACE_ID=
+
+    PRIORITY_CUSTOM_FIELD_ID=
+    PRIORITY_LOW_ID=
+    PRIORITY_MEDIUM_ID=
+    PRIORITY_HIGH_ID=
+
+    EXTENSION_PROCESSED_FIELD_ID=
+    TRUE_ENUM_GID=
     ```
 
 ---
@@ -41,15 +49,15 @@ Ensure you have the following installed on your system:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/asana-task-manager.git
-   cd asana-task-manager
+   git clone https://github.com/VoidGeek/PRADYUMNA-P-DYNAMIC-DEADLINE-SAHYADRI.git
+   cd PRADYUMNA-P-DYNAMIC-DEADLINE-SAHYADRI
    ```
 2. **Install Dependencies**  
    Install all required packages using PNPM:
    ```bash
    pnpm install
    ```
-3. **Compile the Code**  
+3. **Compile the Code** (for Production) 
    Build the TypeScript code into JavaScript:
 
    ```bash
@@ -60,6 +68,11 @@ Ensure you have the following installed on your system:
    Start the development server with hot-reloading:
    ```bash
    pnpm dev
+   ```
+5. **Run the Development Server in Strict Mode(Optional)**  
+   Start the development server with additional strict type checks:  
+   ```bash
+   pnpm dev:strict
    ```
 5. **Run in Production Mode (Optional)**  
    Start the compiled application in production mode:
@@ -111,10 +124,10 @@ Ensure you have the following installed on your system:
 5. **Custom Priority Management**:
 
    - Use priority levels (`Low`, `Medium`, `High`) to organize tasks effectively.
-   - Custom field IDs for priorities are configurable via environment variables.
+   - Custom field IDs for priorities and extension processed are configurable via .env and .env.example
 
 6. **Error Handling**:
 
    - Centralized error handling for API failures and invalid requests.
-   - User-friendly error messages with proper HTTP status codes.
+   - User-friendly error messages with proper HTTP status codes with custom logs.
 

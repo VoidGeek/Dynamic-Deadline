@@ -1,6 +1,5 @@
 import { asanaClient } from "./asanaClient";
 import { CustomField, Task } from "../interfaces/task";
-import { logMessage } from "../utils/logger"; // Add the logger utility
 
 // Fetch tasks in "In Progress" section
 export const fetchInProgressTasks = async (): Promise<Task[]> => {

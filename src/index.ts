@@ -1,7 +1,6 @@
 import "./config/global-utils"; // Initialize global utilities
 import "./config/global-env";
 import express from "express";
-import { logMessage } from "./utils/logger";
 import { getRegisteredRoutes } from "./utils/routeRegistry";
 import taskRoutes from "./routes/taskRouter";
 import { logRequest } from "./middlewares/logRequest";

@@ -6,8 +6,6 @@ import {
   updateTaskDueDate,
 } from "../services/taskService";
 import { Task, CreateTaskRequest, CustomField } from "../interfaces/task"; // Import interfaces
-import { logMessage } from "../utils/logger"; // Logging utility
-import { AppError } from "../middlewares/errorHandler";
 
 const priorityGidMap: Record<string, string> = {
   Low: process.env.PRIORITY_LOW_ID!,
