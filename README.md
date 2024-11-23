@@ -50,115 +50,106 @@ Ensure you have the following installed on your system:
 
 Below are the required CURL commands to retrieve necessary details for configuring your `.env` file.
 
-1. Access Token:
-   Generate the Asana Access Token directly from the Asana Developer Console. This value is not retrieved via API.
+1.  Access Token:
+    Generate the Asana Access Token directly from the Asana Developer Console. This value is not retrieved via API.
 
-2. WORKSPACE_ID:
+2.  WORKSPACE_ID:
 
-   ```bash
-   curl -X GET "https://app.asana.com/api/1.0/workspaces" \
-   -H "Authorization: Bearer <ASANA_ACCESS_TOKEN>"
-   ```
-
-3. DEFAULT_PROJECT_ID
-   ```bash
-   curl -X GET "https://app.asana.com/api/1.0/projects?workspace=<WORKSPACE_ID>" \
-   -H "Authorization: Bearer <ASANA_ACCESS_TOKEN>"
-   ```
-4. IN_PROGRESS_SECTION_ID
-
-   ```bash
-   curl -X GET "https://app.asana.com/api/1.0/projects/<PROJECT_ID>/sections" \
-   -H "Authorization: Bearer <ASANA_ACCESS_TOKEN>"
-   ```
-
-5. The "Priority" custom field will be an enum type with options: **Low**, **Medium**, and **High**.
-
-   ```bash
-   curl -X POST "https://app.asana.com/api/1.0/custom_fields" \
-   -H "Authorization: Bearer <ASANA_ACCESS_TOKEN>" \
-   -H "Content-Type: application/json" \
-   -d '{
-   "data": {
-    "name": "Priority",
-    "type": "enum",
-    "enum_options": [
-      { "name": "Low", "enabled": true },
-      { "name": "Medium", "enabled": true },
-      { "name": "High", "enabled": true }
-    ],
-    "workspace": "<WORKSPACE_ID>"
-   }
-   }'
-   ```
-
-6. The "Extension Processed" field will be an enum type with options **true** and **false**.
-
-   ```bash
-   curl -X POST "https://app.asana.com/api/1.0/custom_fields" \
-   -H "Authorization: Bearer <ASANA_ACCESS_TOKEN>" \
-   -H "Content-Type: application/json" \
-   -d '{
-   "data": {
-    "name": "Extension Processed",
-    "type": "enum",
-    "enum_options": [
-      { "name": "true", "enabled": true },
-      { "name": "false", "enabled": true }
-    ],
-    "workspace": "<WORKSPACE_ID>"
-   }
-   }'
-   ```
-
-7. Attach the **"Priority"** Custom Field
-
-   ```bash
-   curl -X POST "https://app.asana.com/api/1.0/projects/<PROJECT_ID>/addCustomFieldSetting" \
-   -H "Authorization: Bearer <ASANA_ACCESS_TOKEN>" \
-   -H "Content-Type: application/json" \
-   -d '{
-   "data": {
-    "custom_field": "<PRIORITY_CUSTOM_FIELD_ID>", // Replace with the ID of the "Priority" field
-    "is_important": true
-   }
-   }'
-   ```
-
-8. Attach the **"Extension Processed"** Custom Field
-
-   ```bash
-   curl -X POST "https://app.asana.com/api/1.0/projects/<PROJECT_ID>/addCustomFieldSetting" \
-   -H "Authorization: Bearer <ASANA_ACCESS_TOKEN>" \
-   -H "Content-Type: application/json" \
-   -d '{
-   "data": {
-    "custom_field": "<EXTENSION_PROCESSED_FIELD_ID>", // Replace with the ID of the "Extension Processed" field
-    "is_important": false
-   }
-   }'
-   ```
-
-9. PRIORITY_CUSTOM_FIELD_ID
-
-   ```bash
-   curl -X GET "https://app.asana.com/api/1.0/custom_fields?workspace=<WORKSPACE_ID>" \
-   -H "Authorization: Bearer <ASANA_ACCESS_TOKEN>"
-   ```
-
-10. PRIORITY_LOW_ID, PRIORITY_MEDIUM_ID, PRIORITY_HIGH_ID
     ```bash
-    curl -X GET "https://app.asana.com/api/1.0/custom_fields/<CUSTOM_FIELD_ID>" \
+    curl -X GET "https://app.asana.com/api/1.0/workspaces" \
     -H "Authorization: Bearer <ASANA_ACCESS_TOKEN>"
     ```
-11. EXTENSION_PROCESSED_FIELD_ID
+
+3.  DEFAULT_PROJECT_ID
     ```bash
     curl -X GET "https://app.asana.com/api/1.0/projects?workspace=<WORKSPACE_ID>" \
     -H "Authorization: Bearer <ASANA_ACCESS_TOKEN>"
     ```
-12. TRUE_ENUM_GID and FALSE_ENUM_GID
+4.  IN_PROGRESS_SECTION_ID
+
     ```bash
-    curl -X GET "https://app.asana.com/api/1.0/projects?workspace=<WORKSPACE_ID>" \
+    curl -X GET "https://app.asana.com/api/1.0/projects/<PROJECT_ID>/sections" \
+    -H "Authorization: Bearer <ASANA_ACCESS_TOKEN>"
+    ```
+
+5.  The "Priority" custom field will be an enum type with options: **Low**, **Medium**, and **High**.
+
+    ```bash
+    curl -X POST "https://app.asana.com/api/1.0/custom_fields" \
+    -H "Authorization: Bearer <ASANA_ACCESS_TOKEN>" \
+    -H "Content-Type: application/json" \
+    -d '{
+    "data": {
+     "name": "Priority",
+     "type": "enum",
+     "enum_options": [
+       { "name": "Low", "enabled": true },
+       { "name": "Medium", "enabled": true },
+       { "name": "High", "enabled": true }
+     ],
+     "workspace": "<WORKSPACE_ID>"
+    }
+    }'
+    ```
+
+6.  The "Extension Processed" field will be an enum type with options **true** and **false**.
+
+    ```bash
+    curl -X POST "https://app.asana.com/api/1.0/custom_fields" \
+    -H "Authorization: Bearer <ASANA_ACCESS_TOKEN>" \
+    -H "Content-Type: application/json" \
+    -d '{
+    "data": {
+     "name": "Extension Processed",
+     "type": "enum",
+     "enum_options": [
+       { "name": "true", "enabled": true },
+       { "name": "false", "enabled": true }
+     ],
+     "workspace": "<WORKSPACE_ID>"
+    }
+    }'
+    ```
+
+7.  Attach the **"Priority"** Custom Field
+
+    ```bash
+    curl -X POST "https://app.asana.com/api/1.0/projects/<PROJECT_ID>/addCustomFieldSetting" \
+    -H "Authorization: Bearer <ASANA_ACCESS_TOKEN>" \
+    -H "Content-Type: application/json" \
+    -d '{
+    "data": {
+     "custom_field": "<PRIORITY_CUSTOM_FIELD_ID>", // Replace with the ID of the "Priority" field
+     "is_important": true
+    }
+    }'
+    ```
+
+8.  Attach the **"Extension Processed"** Custom Field
+
+    ```bash
+    curl -X POST "https://app.asana.com/api/1.0/projects/<PROJECT_ID>/addCustomFieldSetting" \
+    -H "Authorization: Bearer <ASANA_ACCESS_TOKEN>" \
+    -H "Content-Type: application/json" \
+    -d '{
+    "data": {
+     "custom_field": "<EXTENSION_PROCESSED_FIELD_ID>", // Replace with the ID of the "Extension Processed" field
+     "is_important": false
+    }
+    }'
+    ```
+
+9.  PRIORITY_CUSTOM_FIELD_ID, PRIORITY_LOW_ID, PRIORITY_MEDIUM_ID and PRIORITY_HIGH_ID
+
+    ```bash
+    curl -X GET "https://app.asana.com/api/1.0/projects/<project_id>/custom_field_settings" \
+    -H "Authorization: Bearer <ASANA_ACCESS_TOKEN>"
+    ```
+
+10. EXTENSION_PROCESSED_FIELD_ID, TRUE_ENUM_GID and FALSE_ENUM_GID
+
+    ```bash
+    curl -X GET "https://app.asana.com/api/1.0/projects/<project_id>/custom_field_settings" \
     -H "Authorization: Bearer <ASANA_ACCESS_TOKEN>"
     ```
 
