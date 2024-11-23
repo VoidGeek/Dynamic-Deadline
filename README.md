@@ -234,54 +234,32 @@ Below are the required CURL commands to retrieve necessary details for configuri
 
 ## **Technical Approach**
 
-To implement the solution, I followed a structured approach using Asana's API and adhered to best practices for task management with custom fields:
+1. **Custom Field Management**:
 
-### **1. Creating and Managing Custom Fields**
+   - Created two custom fields: `Priority` and `Extension Processed`.
+   - Attached these custom fields to relevant projects using Asana’s API.
 
-- **Custom Fields Created**:
-  1. **Priority**: A dropdown field with values "Low," "Medium," and "High" for managing task priorities.
-  2. **Extension Processed**: A boolean dropdown field with values "true" and "false" to track whether a task has been processed for extensions.
-- **API Usage**:
-  - Custom fields were created using Asana's `POST /custom_fields` API.
-  - These fields were explicitly attached to relevant projects using the `POST /projects/<PROJECT_ID>/addCustomFieldSetting` endpoint.
+2. **Task Creation Workflow**:
 
-### **2. Task Creation Workflow**
+   - Tasks without priority skip due date calculation and have "Extension Processed" set to `true`.
+   - Tasks with a valid priority have due dates calculated based on the priority and "Extension Processed" set to `false`.
+   - Priority is validated against allowed values (`Low`, `Medium`, `High`). Invalid inputs result in a `400 Bad Request` error.
 
-Tasks are created with the following rules:
+3. **Task Movement Workflow**:
 
-- **No Priority Provided**:
-  - Skips due date calculation.
-  - Marks the "Extension Processed" field as `true`.
-- **Valid Priority Provided**:
-  - Calculates a due date based on the priority.
-  - Marks the "Extension Processed" field as `false`.
-- **Priority Validation**:
-  - Validates the provided value against an allowed list (`"Low," "Medium," "High"`).
-  - Invalid priorities result in a `400 Bad Request` error.
+   - Fetched all tasks in the "In Progress" section.
+   - Filtered tasks to exclude those with `High` priority, already processed extensions, or undefined priority.
+   - Updated eligible tasks by assigning new due dates and marking them as processed.
 
-### **3. Task Movement Logic**
+4. **Logging Enhancements**:
 
-When moving a task to a specific section (e.g., "In Progress"), the following steps are performed:
+   - Implemented structured logging with levels: `DEBUG`, `INFO`, `WARN`, and `ERROR`.
+   - Logged task creation, updates, and error scenarios for better debugging and transparency.
 
-1. **Fetch All Tasks in the Section**:
-   - Retrieve tasks using Asana's API.
-2. **Filter Tasks**:
-   - Exclude tasks that:
-     - Have a priority of `"High"`.
-     - Are already marked as processed (`"Extension Processed" = true`).
-     - Have a missing or undefined priority.
-3. **Update Eligible Tasks**:
-   - Assign new due dates to eligible tasks.
-   - Mark these tasks as processed by setting `"Extension Processed"` to `true`.
+5. **Error Handling Improvements**:
 
-### **4. Improved Logging and Error Handling**
-
-- **Logging Utility**:
-  - Implements log levels (`DEBUG`, `INFO`, `WARN`, `ERROR`) to track critical actions such as task creation, updates, and error scenarios.
-- **Error Handling**:
-  - Ensures meaningful feedback:
-    - Missing required fields (e.g., task name) result in `400 Bad Request` errors.
-    - Invalid custom field values are explicitly rejected with descriptive messages.
+   - Centralized error handling for consistent feedback.
+   - Missing fields or invalid custom field values trigger descriptive error messages with proper status codes.
 
 ---
 
@@ -290,38 +268,38 @@ When moving a task to a specific section (e.g., "In Progress"), the following st
 ### **1. Propagating Custom Fields at the Workspace Level**
 
 - **Assumption**:
-  - Custom fields could be globally attached to a workspace, making them automatically available for all projects.
+  Custom fields could be globally attached to a workspace, making them automatically available for all projects.
 - **Outcome**:
-  - This approach failed, as Asana requires explicit attachment of custom fields to each project.
+  This approach failed, as Asana requires explicit attachment of custom fields to each project.
 
 ### **2. Dynamic Field Assignment**
 
 - **Attempt**:
-  - Dynamically assign custom fields during task creation.
+  -Dynamically assign custom fields during task creation.
 - **Outcome**:
-  - This approach proved overly complex and less efficient than pre-attaching fields to projects.
+  -This approach proved overly complex and less efficient than pre-attaching fields to projects.
 
 ### **3. API Behavior with Default Values**
 
 - **Assumption**:
-  - Asana's default handling for dropdown fields would automatically apply a `"None"` value.
+  Asana's default handling for dropdown fields would automatically apply a `"None"` value.
 - **Outcome**:
-  - Runtime issues arose, leading to explicit handling of default priority values and consistent custom field settings.
+  Runtime issues arose, leading to explicit handling of default priority values and consistent custom field settings.
 
 ### **4. Task Filtering Optimization**
 
 - **Initial Implementation**:
-  - Redundantly fetched and updated all tasks in a section, resulting in performance bottlenecks.
+  Redundantly fetched and updated all tasks in a section, resulting in performance bottlenecks.
 - **Outcome**:
-  - Optimized filtering logic to skip unnecessary updates by pre-checking the priority and processed status of tasks.
+  Optimized filtering logic to skip unnecessary updates by pre-checking the priority and processed status of tasks.
 
 ### **5. Validation with TypeScript vs Runtime**
 
 - **Initial Approach**:
-  - Relied solely on TypeScript interfaces for validating priority values.
+  Relied solely on TypeScript interfaces for validating priority values.
 - **Outcome**:
-  - TypeScript validation was insufficient for invalid inputs received via API requests.
-  - Added explicit validation in the controllers for runtime checks.
+  TypeScript validation was insufficient for invalid inputs received via API requests.
+  Added explicit validation in the controllers for runtime checks.
 
 ---
 
@@ -330,10 +308,10 @@ When moving a task to a specific section (e.g., "In Progress"), the following st
 The final solution:
 
 1. **Accurate Custom Field Management**:
-   - Pre-attached fields to projects for efficient and consistent task creation.
+   Pre-attached fields to projects for efficient and consistent task creation.
 2. **Validated Workflows**:
-   - Handles task creation and movement efficiently, including default behaviors for missing fields.
+   Handles task creation and movement efficiently, including default behaviors for missing fields.
 3. **Improved Logging**:
-   - Provides clear and meaningful logs for better transparency and debugging.
+   Provides clear and meaningful logs for better transparency and debugging and is production-ready.
 4. **Optimized API Interactions**:
-   - Filters and updates tasks only when necessary, improving performance and reducing redundant API calls using recursion.
+   Filters and updates tasks only when necessary, improving performance and reducing redundant API calls using recursion.
