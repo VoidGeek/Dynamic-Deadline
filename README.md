@@ -216,31 +216,19 @@ Below are the required CURL commands to retrieve necessary details for configuri
    - `logMessage`: A structured, color-coded logging utility for enhanced debugging.
    - `wrappedRouter`: A utility that extends the Express Router to automatically register routes in a centralized registry for better API tracking and debugging in logs.
 
-2. **Task Creation**:
-
-   - Create tasks with due dates, priorities, and optional project assignments.
-   - Automatically assigns tasks to the default project if no project ID is provided.
-   - Supports priority customization using pre-defined fields.
-
-3. **Task Progress Management**:
+2. **Task Progress Management**:
 
    - Move tasks to the "In Progress" section for better tracking.
-   - Supports real-time updates with Asana API integration.
 
-4. **Task Retrieval**:
+3. **Task Retrieval**:
 
    - Fetch all tasks from a specific project.
    - Retrieve tasks that are currently in the "In Progress" section.
 
-5. **Custom Priority Management**:
-
-   - Use priority levels (`Low`, `Medium`, `High`) to organize tasks effectively.
-   - Custom field IDs for priorities and extension processed are configurable via .env and .env.example
-
-6. **Error Handling**:
+4. **Error Handling**:
 
    - Centralized error handling for API failures and invalid requests.
-   - User-friendly error messages with proper HTTP status codes with custom logs.
+   - User-friendly error messages with proper HTTP status codes.
 
 ---
 
