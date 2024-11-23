@@ -38,7 +38,7 @@ export const logRequest = (
     // Log the details with HTTP method and status code formatting
     logMessage(
       "DEBUG",
-      `API executed: ${req.originalUrl} | Status: ${statusCode} | Response Time: ${responseTime}ms | Time: ${currentTime} (IST) | IP: ${clientIp}`,
+      `${req.originalUrl} | Status: ${statusCode} | Response Time: ${responseTime}ms | Time: ${currentTime} (IST) | IP: ${clientIp}`,
       undefined,
       req.method
     );

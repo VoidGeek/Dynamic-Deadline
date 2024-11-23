@@ -15,11 +15,8 @@ export const fetchInProgressTasks = async (): Promise<Task[]> => {
 };
 
 // Update a task's due date
-export const updateTaskDueDate = async (
-  taskId: string,
-  newDueDate: string
-): Promise<void> => {
+export const updateTaskDueDate = async (taskId: string, newDueDate: string) => {
   await asanaClient.put(`/tasks/${taskId}`, {
-    due_on: newDueDate,
+    data: { due_on: newDueDate }, // Wrap the due_on field inside a data object
   });
 };
