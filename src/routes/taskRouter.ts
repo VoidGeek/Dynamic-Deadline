@@ -1,4 +1,3 @@
-import { createRouter } from "../utils/wrappedRouter"; // Use the wrapped router
 import {
   createTask,
   moveTaskToInProgress,
@@ -6,7 +5,7 @@ import {
   getTasksByProject,
 } from "../controllers/taskController";
 
-const router = createRouter(); // Use `createRouter` instead of `Router`
+const router = createRouter(); // Use WrapRouter `createRouter` instead of `Router`
 
 // Create a task with an assigned due date
 router.post("/tasks", createTask);

@@ -1,9 +1,9 @@
 import "./config/global-utils"; // Initialize global utilities
 import "./config/global-env";
 import express from "express";
-import { getRegisteredRoutes } from "./utils/routeRegistry";
 import taskRoutes from "./routes/taskRouter";
 import { logRequest } from "./middlewares/logRequest";
+import { routeRegistry, Route } from "./config/routeRegistry"; // Import Route type
 import { errorHandler } from "./middlewares/errorHandler";
 
 const app = express();
@@ -23,7 +23,8 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   logMessage("INFO", "Server running at", `http://localhost:${PORT}`);
 
-  const routes = getRegisteredRoutes();
+  // Explicitly infer the type of routes
+  const routes: Route[] = routeRegistry.getAll();
 
   // Start with a clean header
   console.log("[INFO]  Available APIs:");
