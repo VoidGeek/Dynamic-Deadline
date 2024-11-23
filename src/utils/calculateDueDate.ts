@@ -1,6 +1,6 @@
 const priorityToDaysMap: Record<string, number> = {
   Low: 14,
-  Mid: 7,
+  Medium: 7,
   High: 2,
 };
 
