@@ -36,6 +36,11 @@ export const logMessage = (
   method?: string,
   log: boolean = true
 ): string => {
+  // Restrict DEBUG logs in production mode
+  if (process.env.NODE_ENV === "production" && level === "DEBUG") {
+    return "";
+  }
+
   // Retrieve colors for log level and HTTP method
   const levelColor =
     levelColorMap[level.toUpperCase()] || levelColorMap.DEFAULT;
