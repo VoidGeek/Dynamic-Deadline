@@ -1,6 +1,6 @@
 import kleur from "kleur";
 
-// Define a mapping of log levels to their respective colors
+// Map log levels to colors
 const levelColorMap: Record<string, (text: string) => string> = {
   INFO: kleur.cyan,
   ERROR: kleur.red,
@@ -9,30 +9,38 @@ const levelColorMap: Record<string, (text: string) => string> = {
   DEFAULT: kleur.blue,
 };
 
+// Map HTTP methods to colors
+const methodColorMap: Record<string, (text: string) => string> = {
+  GET: kleur.cyan,
+  POST: kleur.magenta,
+  PUT: kleur.yellow,
+  DELETE: kleur.red,
+  PATCH: kleur.green,
+  DEFAULT: kleur.white,
+};
+
 /**
  * Logs a message with a specific log level and formatting.
- * Automatically formats URLs when provided.
+ * Formats HTTP methods and URLs with specific colors.
  * @param level The log level (e.g., INFO, ERROR, WARN, DEBUG).
  * @param message The message to log.
  * @param url Optional URL to highlight.
+ * @param method Optional HTTP method to format.
  */
 export const logMessage = (
   level: keyof typeof levelColorMap = "DEFAULT",
   message: string,
-  url?: string
+  url?: string,
+  method?: string
 ): void => {
-  // Ensure the level is in uppercase to match the keys in levelColorMap
-  const normalizedLevel = level.toUpperCase() as keyof typeof levelColorMap;
+  // Retrieve colors for log level and HTTP method
+  const levelColor = levelColorMap[level.toUpperCase()] || levelColorMap.DEFAULT;
+  const methodColor = methodColorMap[method?.toUpperCase() || "DEFAULT"];
 
-  // Retrieve the corresponding color function, defaulting to "DEFAULT" if invalid
-  const color = levelColorMap[normalizedLevel] || levelColorMap.DEFAULT;
-
-  // Format the message and optional URL
-  const formattedMessage = `${color(`[${normalizedLevel}]`)} ${kleur.grey(
-    message
-  )}`;
-  const formattedUrl = url ? ` ${kleur.green().underline(url)}` : "";
-
-  // Log the final output
-  console.log(formattedMessage + formattedUrl);
+  // Format and log the message
+  console.log(
+    `${levelColor(`[${level.toUpperCase()}]`)} ${
+      method ? methodColor(`[${method.toUpperCase()}]`) : ""
+    } ${kleur.grey(message)}${url ? ` ${kleur.green().underline(url)}` : ""}`
+  );
 };
