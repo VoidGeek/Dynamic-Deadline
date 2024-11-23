@@ -51,23 +51,32 @@ export const filterTasksForUpdate = (
     );
 
     // Extract values from the custom fields
-    const priority = priorityField?.enum_value?.name || "None";
+    const priority = priorityField?.enum_value?.name || undefined;
     const isExtensionProcessed =
-      extensionField?.enum_value?.gid === process.env.TRUE_ENUM_GID;// GID for "true"
+      extensionField?.enum_value?.gid === process.env.TRUE_ENUM_GID; // GID for "true"
 
     logMessage(
       "DEBUG",
-      `Task "${task.name}" - Priority: ${priority}, Extension Processed: ${
-        isExtensionProcessed ? "true" : "false"
-      }`
+      `Task "${task.name}" - Priority: ${
+        priority || "Missing"
+      }, Extension Processed: ${isExtensionProcessed ? "true" : "false"}`
     );
 
-    // Skip tasks with High priority or already processed
-    if (priority === "High" || isExtensionProcessed) {
+    // Skip tasks with undefined or missing priority, High priority, or already processed
+    if (
+      priority === "High" || // Skip if priority is High
+      isExtensionProcessed // Skip if already processed
+    ) {
       logMessage(
         "INFO",
         `Skipping task "${task.name}" (ID: ${task.gid}) - ${
-          priority === "High" ? "High priority" : "Already processed"
+          !priority
+            ? !isExtensionProcessed
+              ? "Priority is missing and not processed"
+              : "Priority is missing"
+            : priority === "High"
+            ? "High priority"
+            : "Already processed"
         }.`
       );
       return false;

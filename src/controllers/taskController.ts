@@ -47,7 +47,9 @@ export const createTask = async (
 
   // Map custom fields
   const customFields: Record<string, string> = {
-    [process.env.EXTENSION_PROCESSED_FIELD_ID!]: process.env.FALSE_ENUM_GID!, // Set "false" for Extension Processed
+    [process.env.EXTENSION_PROCESSED_FIELD_ID!]: priority
+      ? process.env.FALSE_ENUM_GID! // Set "false" if priority is provided
+      : process.env.TRUE_ENUM_GID!, // Set "true" if priority is not provided
   };
 
   // Add priority to custom fields if provided
@@ -77,7 +79,9 @@ export const createTask = async (
     "INFO",
     `Task "${name}" created successfully in projects "${projectIds.join(
       ", "
-    )}"${dueDate ? ` with due date "${dueDate}"` : ""}.`
+    )}"${
+      dueDate ? ` with due date "${dueDate}"` : ""
+    } and extension processed set to ${priority ? "false" : "true"}.`
   );
 
   sendResponse(res, 201, "Task created successfully.", response.data.data);
@@ -115,10 +119,6 @@ export const moveTaskToInProgress = async (
       priority || "None"
     }, Due On: ${task.due_on}`
   );
-
-  if (!priority) {
-    throw new AppError(400, "Task priority is missing or undefined.");
-  }
 
   // Step 2: Move the task to the "In Progress" section
   await asanaClient.post(
