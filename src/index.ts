@@ -5,6 +5,7 @@ import taskRoutes from "./routes/taskRouter";
 import { logRequest } from "./middlewares/logRequest";
 import { routeRegistry, Route } from "./config/routeRegistry"; // Import Route type
 import { errorHandler } from "./middlewares/errorHandler";
+import { webhookRouter } from "./routes/webhookRouter";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -15,6 +16,7 @@ app.use(logRequest);
 
 // Routes
 app.use("/api", taskRoutes);
+app.use("/webhook", webhookRouter); // Webhook handling
 
 // Error Handling
 app.use(errorHandler);
