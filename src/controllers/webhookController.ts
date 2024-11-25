@@ -3,6 +3,13 @@ import axios from "axios";
 
 const BASE_API_URL = process.env.BASE_API_URL || "http://localhost:3001"; // Your API base URL
 
+// Map enum option GIDs to priorities
+const priorityEnumMap: Record<string, string> = {
+  [process.env.PRIORITY_LOW_ID!]: "Low",
+  [process.env.PRIORITY_MEDIUM_ID!]: "Medium",
+  [process.env.PRIORITY_HIGH_ID!]: "High",
+};
+
 export const handleWebhook = async (req: Request, res: Response) => {
   // Handle Asana webhook validation
   const hookSecret = req.header("X-Hook-Secret");
@@ -27,13 +34,68 @@ export const handleWebhook = async (req: Request, res: Response) => {
     const taskId = event.resource?.gid;
     const parentId = event.parent?.gid;
 
-    // Check if the action is "added" and parent matches "Default" section
+    // Handle priority changes
+    if (
+      event.action === "changed" &&
+      event.resource?.resource_type === "task" &&
+      event.change?.field === "custom_fields" &&
+      event.change?.new_value?.resource_subtype === "enum"
+    ) {
+      logMessage(
+        "INFO",
+        `Task ${taskId} custom field (likely priority) changed.`
+      );
+
+      const enumValueGid = event.change.new_value?.enum_value?.gid;
+
+      if (!enumValueGid) {
+        logMessage(
+          "WARN",
+          `Task ${taskId} custom field change does not include enum value.`
+        );
+        continue;
+      }
+
+      // Map the enumValueGid to priority
+      const priority = priorityEnumMap[enumValueGid];
+      if (!priority) {
+        logMessage(
+          "WARN",
+          `Task ${taskId} custom field enum value GID ${enumValueGid} does not match any priority.`
+        );
+        continue;
+      }
+
+      logMessage("INFO", `Task ${taskId} priority determined as: ${priority}.`);
+
+      // Call the API to update the task based on the new priority
+      const response = await axios.patch(
+        `${BASE_API_URL}/api/tasks/${taskId}/priority`,
+        { priority }
+      );
+
+      if (response.status !== 200) {
+        logMessage(
+          "ERROR",
+          `Unexpected response from API for task ${taskId}: ${response.status}`,
+          response.data
+        );
+        throw new AppError(500, `Failed to update task ${taskId} priority.`);
+      }
+
+      logMessage(
+        "INFO",
+        `Task ${taskId} priority successfully updated to: ${priority} via API.`
+      );
+    }
+
+    // Handle other criteria (like tasks added to Default/In Progress sections)
     if (
       event.action === "added" &&
-      parentId === process.env.DEFAULT_SECTION_ID &&
-      event.resource?.resource_type === "task"
+      event.resource?.resource_type === "task" &&
+      parentId === process.env.DEFAULT_SECTION_ID
     ) {
-      logMessage("INFO", `Task ${taskId} added to "Default" section.`);
+      logMessage("INFO", `Task ${taskId} added to Default section.`);
 
       const response = await axios.patch(
         `${BASE_API_URL}/api/tasks/${taskId}/fix`
@@ -45,25 +107,18 @@ export const handleWebhook = async (req: Request, res: Response) => {
           `Unexpected response from API for task ${taskId}: ${response.status}`,
           response.data
         );
-        throw new AppError(
-          500,
-          `Failed to fix task ${taskId} in "Default" section.`
-        );
+        throw new AppError(500, `Failed to fix task ${taskId}.`);
       }
 
-      logMessage(
-        "INFO",
-        `Task ${taskId} successfully fixed in "Default" section via API.`
-      );
+      logMessage("INFO", `Task ${taskId} successfully fixed.`);
     }
 
-    // Check if the action is "added" and parent matches "In Progress" section
     if (
       event.action === "added" &&
-      parentId === process.env.IN_PROGRESS_SECTION_ID &&
-      event.resource?.resource_type === "task"
+      event.resource?.resource_type === "task" &&
+      parentId === process.env.IN_PROGRESS_SECTION_ID
     ) {
-      logMessage("INFO", `Task ${taskId} added to "In Progress" section.`);
+      logMessage("INFO", `Task ${taskId} added to In Progress section.`);
 
       const response = await axios.patch(
         `${BASE_API_URL}/api/tasks/${taskId}/progress`
@@ -77,20 +132,15 @@ export const handleWebhook = async (req: Request, res: Response) => {
         );
         throw new AppError(
           500,
-          `Failed to move task ${taskId} to "In Progress".`
+          `Failed to move task ${taskId} to In Progress.`
         );
       }
 
-      logMessage(
-        "INFO",
-        `Task ${taskId} successfully moved to "In Progress" via API.`
-      );
+      logMessage("INFO", `Task ${taskId} successfully moved to In Progress.`);
     } else {
       logMessage(
         "DEBUG",
-        `Event did not match "In Progress" or "Default" section criteria: ${JSON.stringify(
-          event
-        )}`
+        `Event did not match any defined criteria: ${JSON.stringify(event)}`
       );
     }
   }
