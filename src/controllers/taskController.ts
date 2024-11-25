@@ -5,6 +5,7 @@ import {
   fetchInProgressTasks,
   updateTaskDueDate,
   filterTasksForUpdate,
+  fixTask,
 } from "../services/taskService";
 import { Task, CreateTaskRequest, CustomField } from "../interfaces/task"; // Import interfaces
 
@@ -213,4 +214,96 @@ export const getTasksByProject = async (
     `Fetched ${tasks.length} tasks for project ID: ${projectId}.`
   );
   sendResponse(res, 200, "Fetched tasks for the project.", tasks);
+};
+
+export const fixTaskController = async (req: Request, res: Response) => {
+  const { id: taskId } = req.params;
+
+  logMessage("INFO", `Received request to fix task with ID: ${taskId}`);
+
+  await fixTask(taskId); // Call the service function to fix the task
+
+  logMessage("INFO", `Task ${taskId} fixed successfully.`);
+  sendResponse(res, 200, `Task ${taskId} fixed successfully.`);
+};
+
+export const updateTaskPriorityAndDueDate = async (
+  req: Request,
+  res: Response
+) => {
+  const { id: taskId } = req.params;
+  const { priority } = req.body; // Priority is passed in the request body
+
+  if (!priority) {
+    throw new AppError(400, "Priority is required.");
+  }
+
+  const VALID_PRIORITIES = ["Low", "Medium", "High"];
+  const priorityGidMap: Record<string, string> = {
+    Low: process.env.PRIORITY_LOW_ID!,
+    Medium: process.env.PRIORITY_MEDIUM_ID!,
+    High: process.env.PRIORITY_HIGH_ID!,
+  };
+
+  if (!VALID_PRIORITIES.includes(priority)) {
+    throw new AppError(
+      400,
+      `Invalid priority value. Allowed values are: ${VALID_PRIORITIES.join(
+        ", "
+      )}.`
+    );
+  }
+
+  logMessage("INFO", `Updating task ${taskId} with priority: ${priority}`);
+
+  // Fetch the task details
+  const { data: task } = await asanaClient.get(`/tasks/${taskId}`, {
+    params: { opt_fields: "gid,name,custom_fields" },
+  });
+
+  if (!task) {
+    throw new AppError(404, `Task with ID ${taskId} not found.`);
+  }
+
+  logMessage("DEBUG", `Fetched task details: ${JSON.stringify(task)}`);
+
+  const customFields: Record<string, string> = {};
+  let needsUpdate = false;
+
+  // Update the priority
+  const priorityFieldId = process.env.PRIORITY_CUSTOM_FIELD_ID!;
+  customFields[priorityFieldId] = priorityGidMap[priority];
+  logMessage("INFO", `Setting priority of task ${taskId} to: ${priority}`);
+  needsUpdate = true;
+
+  // Calculate and update due date
+  const defaultDueDate = calculateDueDate(priority);
+  logMessage(
+    "INFO",
+    `Setting due date for task ${taskId} to: ${defaultDueDate}`
+  );
+
+  // Update the `extension_processed` field to `False`
+  const extensionFieldId = process.env.EXTENSION_PROCESSED_FIELD_ID!;
+  customFields[extensionFieldId] = process.env.FALSE_ENUM_GID!;
+  logMessage(
+    "INFO",
+    `Setting extension_processed of task ${taskId} to: False`
+  );
+
+  const updatedTaskData = {
+    due_on: defaultDueDate,
+    custom_fields: customFields,
+  };
+
+  await asanaClient.put(`/tasks/${taskId}`, {
+    data: updatedTaskData,
+  });
+
+  logMessage(
+    "INFO",
+    `Task ${taskId} successfully updated with priority: ${priority}, due date: ${defaultDueDate}, and extension_processed set to: False.`
+  );
+
+  sendResponse(res, 200, `Task ${taskId} updated successfully.`);
 };

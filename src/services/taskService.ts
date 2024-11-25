@@ -1,6 +1,13 @@
 import { asanaClient } from "./asanaClient";
 import { CustomField, Task } from "../interfaces/task";
+const VALID_PRIORITIES = ["Low", "Medium", "High"];
+const priorityGidMap: Record<string, string> = {
+  Low: process.env.PRIORITY_LOW_ID!,
+  Medium: process.env.PRIORITY_MEDIUM_ID!,
+  High: process.env.PRIORITY_HIGH_ID!,
+};
 
+import { calculateDueDate } from "../utils/calculateDueDate";
 // Fetch tasks in "In Progress" section
 export const fetchInProgressTasks = async (): Promise<Task[]> => {
   const response = await asanaClient.get(
@@ -91,4 +98,59 @@ export const filterTasksForUpdate = (
   );
 
   return filteredTasks;
+};
+
+export const fixTask = async (taskId: string): Promise<void> => {
+  logMessage("INFO", `Fixing task with ID: ${taskId}`);
+
+  // Fetch task details from Asana API
+  const { data: task } = await asanaClient.get(`/tasks/${taskId}`, {
+    params: { opt_fields: "gid,name,custom_fields" },
+  });
+
+  if (!task) {
+    throw new AppError(404, `Task with ID ${taskId} not found.`);
+  }
+
+  logMessage("DEBUG", `Fetched task details: ${JSON.stringify(task)}`);
+
+  const customFields: Record<string, string> = {};
+  let needsUpdate = false;
+
+  // Set extension_processed to true if it's missing
+  const extensionFieldId = process.env.EXTENSION_PROCESSED_FIELD_ID!;
+  const extensionField = task.custom_fields?.find(
+    (field: any) => field.gid === extensionFieldId
+  );
+  const extensionProcessed = extensionField?.enum_value?.gid;
+
+  if (!extensionProcessed) {
+    customFields[extensionFieldId] = process.env.TRUE_ENUM_GID!;
+    logMessage(
+      "INFO",
+      `Task ${taskId} is newly created or missing extension_processed. Setting it to true.`
+    );
+    needsUpdate = true;
+  }
+
+  // Update the task if the `extension_processed` flag was set
+  if (needsUpdate) {
+    logMessage(
+      "DEBUG",
+      `Updating task ${taskId} with custom fields: ${JSON.stringify(
+        customFields
+      )}`
+    );
+
+    await asanaClient.put(`/tasks/${taskId}`, {
+      data: { custom_fields: customFields },
+    });
+
+    logMessage("INFO", `Task ${taskId} successfully updated.`);
+  } else {
+    logMessage(
+      "INFO",
+      `Task ${taskId} already has extension_processed set. No update needed.`
+    );
+  }
 };

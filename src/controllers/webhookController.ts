@@ -27,6 +27,36 @@ export const handleWebhook = async (req: Request, res: Response) => {
     const taskId = event.resource?.gid;
     const parentId = event.parent?.gid;
 
+    // Check if the action is "added" and parent matches "Default" section
+    if (
+      event.action === "added" &&
+      parentId === process.env.DEFAULT_SECTION_ID &&
+      event.resource?.resource_type === "task"
+    ) {
+      logMessage("INFO", `Task ${taskId} added to "Default" section.`);
+
+      const response = await axios.patch(
+        `${BASE_API_URL}/api/tasks/${taskId}/fix`
+      );
+
+      if (response.status !== 200) {
+        logMessage(
+          "ERROR",
+          `Unexpected response from API for task ${taskId}: ${response.status}`,
+          response.data
+        );
+        throw new AppError(
+          500,
+          `Failed to fix task ${taskId} in "Default" section.`
+        );
+      }
+
+      logMessage(
+        "INFO",
+        `Task ${taskId} successfully fixed in "Default" section via API.`
+      );
+    }
+
     // Check if the action is "added" and parent matches "In Progress" section
     if (
       event.action === "added" &&
@@ -58,7 +88,9 @@ export const handleWebhook = async (req: Request, res: Response) => {
     } else {
       logMessage(
         "DEBUG",
-        `Event did not match "In Progress" criteria: ${JSON.stringify(event)}`
+        `Event did not match "In Progress" or "Default" section criteria: ${JSON.stringify(
+          event
+        )}`
       );
     }
   }
