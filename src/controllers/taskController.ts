@@ -4,6 +4,7 @@ import { calculateDueDate } from "../utils/calculateDueDate";
 import {
   fetchInProgressTasks,
   updateTaskDueDate,
+  filterTasksForUpdate,
 } from "../services/taskService";
 import { Task, CreateTaskRequest, CustomField } from "../interfaces/task"; // Import interfaces
 
@@ -144,51 +145,11 @@ export const moveTaskToInProgress = async (
       `Fetched ${inProgressTasks.length} tasks currently in the "In Progress" section`
     );
 
-    // Filter and update only eligible tasks
-    const tasksToUpdate = inProgressTasks.filter((t) => {
-      logMessage(
-        "DEBUG",
-        `Evaluating task "${t.name}" (ID: ${t.gid}) for updates.`
-      );
-
-      const priorityField = t.custom_fields?.find(
-        (field: CustomField) =>
-          field.gid === process.env.PRIORITY_CUSTOM_FIELD_ID
-      );
-      const extensionField = t.custom_fields?.find(
-        (field: CustomField) =>
-          field.gid === process.env.EXTENSION_PROCESSED_FIELD_ID
-      );
-
-      // Extract priority and extension processed values safely
-      const tPriority = priorityField?.enum_value?.name || "None";
-      const isExtensionProcessed =
-        extensionField?.enum_value?.gid === "1208809657512865"; // Check if "true" enum GID is set
-
-      logMessage(
-        "DEBUG",
-        `Task "${t.name}" - Priority: ${tPriority}, Extension Processed: ${
-          isExtensionProcessed ? "true" : "false"
-        }`
-      );
-
-      // Skip tasks with High priority or already processed
-      if (tPriority === "High" || isExtensionProcessed) {
-        logMessage(
-          "INFO",
-          `Skipping task "${t.name}" (ID: ${t.gid}) - ${
-            tPriority === "High" ? "High priority" : "Already processed"
-          }.`
-        );
-        return false;
-      }
-
-      return true;
-    });
-
-    logMessage(
-      "INFO",
-      `Found ${tasksToUpdate.length} tasks eligible for due date extension.`
+    // Use the filterTasksForUpdate utility to determine eligible tasks
+    const tasksToUpdate = filterTasksForUpdate(
+      inProgressTasks,
+      priorityFieldId,
+      extensionFieldId
     );
 
     // Update the due dates of eligible tasks
@@ -209,7 +170,7 @@ export const moveTaskToInProgress = async (
         await asanaClient.put(`/tasks/${t.gid}`, {
           data: {
             custom_fields: {
-              [extensionFieldId]: "1208809657512865", // Set to "true" using GID
+              [extensionFieldId]: process.env.TRUE_ENUM_GID, // Set to "true" using GID
             },
           },
         });
@@ -225,7 +186,6 @@ export const moveTaskToInProgress = async (
   // Step 4: Send success response
   sendResponse(res, 200, "Task moved to In Progress successfully.");
 };
-
 // Fetch all tasks in "In Progress" section
 export const getInProgressTasks = async (_req: Request, res: Response) => {
   logMessage("DEBUG", "Fetching all tasks in the 'In Progress' section");
