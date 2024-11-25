@@ -18,3 +18,34 @@ export interface CustomField {
   gid: string;
   enum_value?: { name: string };
 }
+
+export interface Event {
+  action: string;
+  resource: {
+    gid: string;
+    resource_type: string;
+    resource_subtype?: string; // Optional property
+  };
+  parent?: {
+    gid: string;
+    resource_type: string;
+  };
+  change?: {
+    field: string;
+    action: string;
+    new_value?: {
+      gid: string;
+      resource_type: string;
+      resource_subtype?: string; // Optional property
+      enum_value?: {
+        gid: string;
+        resource_type: string;
+      };
+    };
+  };
+  created_at?: string;
+  user?: {
+    gid: string;
+    resource_type: string;
+  };
+}
