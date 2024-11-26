@@ -105,7 +105,7 @@ export const fixTask = async (taskId: string): Promise<void> => {
 
   // Fetch task details from Asana API
   const { data: task } = await asanaClient.get(`/tasks/${taskId}`, {
-    params: { opt_fields: "gid,name,custom_fields" },
+    params: { opt_fields: "gid,name,custom_fields,due_on" }, // Include due_on in the API response
   });
 
   if (!task) {
@@ -117,23 +117,61 @@ export const fixTask = async (taskId: string): Promise<void> => {
   const customFields: Record<string, string> = {};
   let needsUpdate = false;
 
-  // Set extension_processed to true if it's missing
+  // Check extension_processed field
   const extensionFieldId = process.env.EXTENSION_PROCESSED_FIELD_ID!;
-  const extensionField = task.custom_fields?.find(
-    (field: any) => field.gid === extensionFieldId
-  );
-  const extensionProcessed = extensionField?.enum_value?.gid;
 
-  if (!extensionProcessed) {
-    customFields[extensionFieldId] = process.env.TRUE_ENUM_GID!;
+  // Log the entire task object for debugging
+  console.log(JSON.stringify(task, null, 2));
+  // Locate the Extension Processed field within custom_fields
+  const extensionField = task.custom_fields?.find(
+    (field: { gid: string }) => field.gid === extensionFieldId
+  );
+
+  if (!extensionField) {
+    logMessage(
+      "WARN",
+      `Extension Processed field (gid: ${extensionFieldId}) not found in task ${task.gid}.`
+    );
+  }
+
+  // Extract the `gid` from the `enum_value` of the located field, if present
+  const currentExtensionValue = extensionField?.enum_value?.gid;
+
+  console.log(`Current Extension Processed Value: ${currentExtensionValue}`);
+
+  // Determine update based on due_on and current extension_processed value
+  if (task.due_on) {
+    if (currentExtensionValue === process.env.FALSE_ENUM_GID) {
+      logMessage(
+        "INFO",
+        `Task ${taskId} already has extension_processed set to false. No update needed.`
+      );
+      return;
+    }
     logMessage(
       "INFO",
-      `Task ${taskId} is newly created or missing extension_processed. Setting it to true.`
+      `Task ${taskId} has a due date (${task.due_on}). Setting extension_processed to false.`
     );
+    customFields[extensionFieldId] = process.env.FALSE_ENUM_GID!;
+    needsUpdate = true;
+  } else {
+    console.log(currentExtensionValue);
+    if (currentExtensionValue === process.env.TRUE_ENUM_GID) {
+      logMessage(
+        "INFO",
+        `Task ${taskId} already has extension_processed set to true. No update needed.`
+      );
+      return;
+    }
+    logMessage(
+      "INFO",
+      `Task ${taskId} is missing or has incorrect extension_processed. Setting it to true.`
+    );
+    customFields[extensionFieldId] = process.env.TRUE_ENUM_GID!;
     needsUpdate = true;
   }
 
-  // Update the task if the `extension_processed` flag was set
+  // Update the task if any changes are needed
   if (needsUpdate) {
     logMessage(
       "DEBUG",
@@ -147,10 +185,5 @@ export const fixTask = async (taskId: string): Promise<void> => {
     });
 
     logMessage("INFO", `Task ${taskId} successfully updated.`);
-  } else {
-    logMessage(
-      "INFO",
-      `Task ${taskId} already has extension_processed set. No update needed.`
-    );
   }
 };

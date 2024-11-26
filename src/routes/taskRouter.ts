@@ -4,7 +4,8 @@ import {
   getInProgressTasks,
   getTasksByProject,
   fixTaskController,
-  updateTaskPriorityAndDueDate
+  updateTaskPriorityAndDueDate,
+  updateHighPriorityTaskOnRemoval,
 } from "../controllers/taskController";
 
 const router = createRouter(); // Use WrapRouter `createRouter` instead of `Router`
@@ -23,5 +24,7 @@ router.get("/tasks/in-progress", getInProgressTasks);
 
 // Fetch tasks for a specific project
 router.get("/tasks/:projectId", getTasksByProject);
+
+router.put("/tasks/:id/remove", updateHighPriorityTaskOnRemoval);
 
 export default router;
