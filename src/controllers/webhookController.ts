@@ -32,6 +32,15 @@ export const handleWebhook = async (req: Request, res: Response) => {
       const { gid: parentId } = event.parent || {};
 
       try {
+        // Handle tasks moved or deleted from "In Progress" section
+        if (
+          event.action === "removed" &&
+          parentId === process.env.IN_PROGRESS_SECTION_ID &&
+          event.resource?.resource_type === "task"
+        ) {
+          await axios.put(`${BASE_API_URL}/api/tasks/${taskId}/remove`);
+        }
+
         // Handle tasks added to "Default" section
         if (
           event.action === "added" &&
