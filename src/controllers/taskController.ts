@@ -286,10 +286,7 @@ export const updateTaskPriorityAndDueDate = async (
   // Update the `extension_processed` field to `False`
   const extensionFieldId = process.env.EXTENSION_PROCESSED_FIELD_ID!;
   customFields[extensionFieldId] = process.env.FALSE_ENUM_GID!;
-  logMessage(
-    "INFO",
-    `Setting extension_processed of task ${taskId} to: False`
-  );
+  logMessage("INFO", `Setting extension_processed of task ${taskId} to: False`);
 
   const updatedTaskData = {
     due_on: defaultDueDate,
@@ -306,4 +303,78 @@ export const updateTaskPriorityAndDueDate = async (
   );
 
   sendResponse(res, 200, `Task ${taskId} updated successfully.`);
+};
+
+export const updateHighPriorityTaskOnRemoval = async (
+  req: Request,
+  res: Response
+) => {
+  logMessage("INFO", "Processing all tasks in 'In Progress' section");
+
+  const extensionProcessedFieldId = process.env.EXTENSION_PROCESSED_FIELD_ID!;
+  const trueEnumGid = process.env.TRUE_ENUM_GID!;
+  const falseEnumGid = process.env.FALSE_ENUM_GID!;
+
+  // Step 1: Fetch tasks in the "In Progress" section using the service
+  const tasks = await fetchInProgressTasks();
+
+  if (!tasks || tasks.length === 0) {
+    logMessage("INFO", "No tasks found in 'In Progress' section.");
+    return sendResponse(res, 200, "No tasks to process in 'In Progress'.");
+  }
+
+  logMessage("INFO", `Fetched ${tasks.length} tasks in 'In Progress'.`);
+
+  // Step 2: Filter tasks where `extension_processed` is `true`
+  const tasksToProcess = tasks.filter((task: any) => {
+    const extensionProcessed = task.custom_fields?.find(
+      (field: any) => field.gid === extensionProcessedFieldId
+    )?.enum_value?.gid;
+
+    return extensionProcessed === trueEnumGid;
+  });
+
+  logMessage(
+    "INFO",
+    `${tasksToProcess.length} tasks with extension_processed = true will be updated.`
+  );
+
+  // Step 3: Update each eligible task
+  await Promise.all(
+    tasksToProcess.map(async (task: any) => {
+      const oldDueDate = new Date(task.due_on);
+      const newDueDate = new Date(oldDueDate);
+      newDueDate.setDate(oldDueDate.getDate() - 2); // Subtract 2 days
+
+      logMessage(
+        "INFO",
+        `Updating task: ${task.name} (ID: ${
+          task.gid
+        }) | Old Due Date: ${oldDueDate.toISOString()} | New Due Date: ${newDueDate.toISOString()}`
+      );
+
+      // Update the task in Asana
+      await asanaClient.put(`/tasks/${task.gid}`, {
+        data: {
+          due_on: newDueDate.toISOString().split("T")[0],
+          custom_fields: {
+            [extensionProcessedFieldId]: falseEnumGid, // Set extension_processed to false
+          },
+        },
+      });
+
+      logMessage(
+        "INFO",
+        `Task ${task.name} (ID: ${
+          task.gid
+        }) updated: Due Date: ${newDueDate.toISOString()}, Extension Processed: false`
+      );
+    })
+  );
+
+  sendResponse(
+    res,
+    200,
+    `${tasksToProcess.length} tasks updated successfully in 'In Progress'.`
+  );
 };
