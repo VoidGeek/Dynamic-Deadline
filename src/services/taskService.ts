@@ -7,7 +7,6 @@ const priorityGidMap: Record<string, string> = {
   High: process.env.PRIORITY_HIGH_ID!,
 };
 
-import { calculateDueDate } from "../utils/calculateDueDate";
 // Fetch tasks in "In Progress" section
 export const fetchInProgressTasks = async (): Promise<Task[]> => {
   const response = await asanaClient.get(
@@ -100,16 +99,33 @@ export const filterTasksForUpdate = (
   return filteredTasks;
 };
 
+export const fetchTaskFromDefaultSection = async (): Promise<any[]> => {
+  const response = await asanaClient.get(
+    `/sections/${process.env.DEFAULT_SECTION_ID}/tasks`,
+    {
+      params: {
+        opt_fields: "gid,name,custom_fields,due_on", // Include relevant fields
+      },
+    }
+  );
+
+  return response.data.data as any[];
+};
+
 export const fixTask = async (taskId: string): Promise<void> => {
   logMessage("INFO", `Fixing task with ID: ${taskId}`);
 
-  // Fetch task details from Asana API
-  const { data: task } = await asanaClient.get(`/tasks/${taskId}`, {
-    params: { opt_fields: "gid,name,custom_fields,due_on" }, // Include due_on in the API response
-  });
+  // Fetch all tasks from the default section
+  const tasks = await fetchTaskFromDefaultSection();
+
+  // Find the specific task by ID
+  const task = tasks.find((t) => t.gid === taskId);
 
   if (!task) {
-    throw new AppError(404, `Task with ID ${taskId} not found.`);
+    throw new AppError(
+      404,
+      `Task with ID ${taskId} not found in the default section.`
+    );
   }
 
   logMessage("DEBUG", `Fetched task details: ${JSON.stringify(task)}`);
@@ -119,10 +135,6 @@ export const fixTask = async (taskId: string): Promise<void> => {
 
   // Check extension_processed field
   const extensionFieldId = process.env.EXTENSION_PROCESSED_FIELD_ID!;
-
-  // Log the entire task object for debugging
-  console.log(JSON.stringify(task, null, 2));
-  // Locate the Extension Processed field within custom_fields
   const extensionField = task.custom_fields?.find(
     (field: { gid: string }) => field.gid === extensionFieldId
   );
@@ -134,10 +146,12 @@ export const fixTask = async (taskId: string): Promise<void> => {
     );
   }
 
-  // Extract the `gid` from the `enum_value` of the located field, if present
   const currentExtensionValue = extensionField?.enum_value?.gid;
 
-  console.log(`Current Extension Processed Value: ${currentExtensionValue}`);
+  logMessage(
+    "DEBUG",
+    `Current Extension Processed Value: ${currentExtensionValue}`
+  );
 
   // Determine update based on due_on and current extension_processed value
   if (task.due_on) {
@@ -148,14 +162,9 @@ export const fixTask = async (taskId: string): Promise<void> => {
       );
       return;
     }
-    logMessage(
-      "INFO",
-      `Task ${taskId} has a due date (${task.due_on}). Setting extension_processed to false.`
-    );
     customFields[extensionFieldId] = process.env.FALSE_ENUM_GID!;
     needsUpdate = true;
   } else {
-    console.log(currentExtensionValue);
     if (currentExtensionValue === process.env.TRUE_ENUM_GID) {
       logMessage(
         "INFO",
@@ -163,10 +172,6 @@ export const fixTask = async (taskId: string): Promise<void> => {
       );
       return;
     }
-    logMessage(
-      "INFO",
-      `Task ${taskId} is missing or has incorrect extension_processed. Setting it to true.`
-    );
     customFields[extensionFieldId] = process.env.TRUE_ENUM_GID!;
     needsUpdate = true;
   }
