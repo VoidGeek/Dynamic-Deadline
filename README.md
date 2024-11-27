@@ -315,3 +315,49 @@ The final solution:
    Provides clear and meaningful logs for better transparency and debugging and is production-ready.
 4. **Optimized API Interactions**:
    Filters and updates tasks only when necessary, improving performance and reducing redundant API calls using recursion.
+
+## **Additional Improvements**
+
+I have added some improvements upon feedback:
+
+1. **Webhook Integration with ngrok**  
+   Integrated webhooks using `ngrok` to expose a local server, enabling seamless communication between Asana and the application.
+
+   ```bash
+    ngrok http <port>
+   ```
+
+2. **Webhook Registration**  
+    Used a `curl` command to register the webhook URL with Asana. The entire process is automated, ensuring smooth and efficient task updates.
+
+   ```bash
+    curl --request POST \
+     --url https://app.asana.com/api/1.0/webhooks \
+     --header 'accept: application/json' \
+     --header 'content-type: application/json' \
+     --header 'Authorization: Bearer 2/1208796518383027/1208796540887303:4cfae280ec1bfeaf221da03f1438bc1c' \
+     --data '
+      {
+      "data": {
+      "resource": "1208796267729729",
+      "target": "<WebhookURL>/webhook"
+         }
+      }
+      '
+   ```
+
+3. **Purpose of Using Webhooks**
+
+   - Enables real-time updates from Asana whenever tasks or projects are modified.
+   - Keeps the application synchronized without constant polling.
+   - Reduces server load for better efficiency.
+
+4. **Why Webhooks Instead of WebSockets**
+
+   - Webhooks fit Asana's event-driven API for asynchronous updates.
+   - WebSockets, designed for continuous communication, are unnecessary for task updates.
+   - Webhooks are simpler, more reliable, and resource-efficient.
+
+5. **Fully Automated Workflow**
+   - After registration, updates are processed automatically without manual intervention.
+   - Ensures seamless interaction with the Asana UI, reducing maintenance.
