@@ -6,10 +6,26 @@ A Node.js API for managing tasks in Asana, built with Express.js, TypeScript, an
 
 ## **Endpoints**
 
-1. **POST** `/tasks` - Create a task with a due date and priority.
-2. **PATCH** `/tasks/:id/progress` - Move a task to the "In Progress" section.
-3. **GET** `/tasks/in-progress` - Retrieve all tasks in the "In Progress" section.
-4. **GET** `/tasks/:projectId` - Fetch tasks for a specific project.
+1. **POST** `/api/tasks`  
+Create a new task with a due date and priority.
+
+2. **PATCH** `/api/tasks/:id/progress`  
+   Move a task to the "In Progress" section and update due dates and extensions of other tasks if the moved task is of high priority.
+
+3. **PATCH** `/api/tasks/:id/priority`  
+   Update the priority of a specific task.
+
+4. **PATCH** `/api/tasks/:id/fix`  
+   updates the task's extension in the default section.
+
+5. **GET** `/api/tasks/in-progress`  
+   Retrieve all tasks currently in the "In Progress" section.
+
+6. **GET** `/api/tasks/:projectId`  
+   Fetch all tasks associated with a specific project.
+
+7. **PUT** `/api/tasks/:id/remove`  
+   if task is moved out of progress, this api updates it
 
 ---
 
@@ -26,23 +42,26 @@ Ensure you have the following installed on your system:
   - Create a `.env` file in the root directory with the following:
   - Refer the .env.example which was done through dotenv-safe.
 
-    ```env
-    ASANA_ACCESS_TOKEN=
-    IN_PROGRESS_SECTION_ID=
-    PORT=
+  ```env
+  ASANA_ACCESS_TOKEN=
+  IN_PROGRESS_SECTION_ID=
+  PORT=
 
-    DEFAULT_PROJECT_ID=
-    WORKSPACE_ID=
+  DEFAULT_SECTION_ID=
+  DEFAULT_PROJECT_ID=
+  WORKSPACE_ID=
 
-    PRIORITY_CUSTOM_FIELD_ID=
-    PRIORITY_LOW_ID=
-    PRIORITY_MEDIUM_ID=
-    PRIORITY_HIGH_ID=
+  PRIORITY_CUSTOM_FIELD_ID=
+  PRIORITY_LOW_ID=
+  PRIORITY_MEDIUM_ID=
+  PRIORITY_HIGH_ID=
 
-    EXTENSION_PROCESSED_FIELD_ID=
-    TRUE_ENUM_GID=
-    FALSE_ENUM_GID=
-    ```
+  EXTENSION_PROCESSED_FIELD_ID=
+  TRUE_ENUM_GID=
+  FALSE_ENUM_GID=
+
+  BASE_API_URL=
+  ```
 
 ---
 
@@ -316,6 +335,8 @@ The final solution:
 4. **Optimized API Interactions**:
    Filters and updates tasks only when necessary, improving performance and reducing redundant API calls using recursion.
 
+---
+
 ## **Additional Improvements**
 
 I have added some improvements upon feedback:
@@ -335,28 +356,36 @@ I have added some improvements upon feedback:
      --url https://app.asana.com/api/1.0/webhooks \
      --header 'accept: application/json' \
      --header 'content-type: application/json' \
-     --header 'Authorization: Bearer 2/1208796518383027/1208796540887303:4cfae280ec1bfeaf221da03f1438bc1c' \
+     --header 'Authorization: Bearer <ASANA_ACCESS_TOKEN>' \
      --data '
       {
       "data": {
-      "resource": "1208796267729729",
+      "resource": "<DEFAULT_PROJECT_ID>",
       "target": "<WebhookURL>/webhook"
          }
       }
       '
    ```
 
-3. **Purpose of Using Webhooks**
+3. Dynamic Due Date Adjustment
 
-   - Enables real-time updates from Asana whenever tasks or projects are modified.
-   - Keeps the application synchronized without constant polling.
-   - Reduces server load for better efficiency.
+   - When a task is moved out of the "In Progress" section, the due dates for all remaining tasks in the section are automatically reduced by 2 days.
+   - This functionality is triggered using the webhook event listener:
 
-4. **Why Webhooks Instead of WebSockets**
+   ```bash
+   if (
+   event.action === "removed" &&
+   parentId === process.env.IN_PROGRESS_SECTION_ID &&
+   event.resource?.resource_type === "task"
+   ) {
+   await axios.put(${BASE_API_URL}/api/tasks/${taskId}/remove);
+   }
+   ```
 
-   - Webhooks fit Asana's event-driven API for asynchronous updates.
-   - WebSockets, designed for continuous communication, are unnecessary for task updates.
-   - Webhooks are simpler, more reliable, and resource-efficient.
+4. **Websocket vs Webhook**
+
+   - **Webhooks** for real-time, event-driven updates, making them ideal for triggering specific actions when tasks or projects are modified.
+   - **WebSockets** are not supported by Asana, as they are designed for continuous, bidirectional communication, which is unnecessary for Asana's event-based workflow.
 
 5. **Fully Automated Workflow**
    - After registration, updates are processed automatically without manual intervention.
