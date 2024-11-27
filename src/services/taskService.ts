@@ -1,23 +1,25 @@
 import { asanaClient } from "./asanaClient";
 import { CustomField, Task } from "../interfaces/task";
-const VALID_PRIORITIES = ["Low", "Medium", "High"];
-const priorityGidMap: Record<string, string> = {
-  Low: process.env.PRIORITY_LOW_ID!,
-  Medium: process.env.PRIORITY_MEDIUM_ID!,
-  High: process.env.PRIORITY_HIGH_ID!,
-};
+import { fetchTasksFromSection } from "../utils/fetchTasksFromSection";
 
 // Fetch tasks in "In Progress" section
 export const fetchInProgressTasks = async (): Promise<Task[]> => {
-  const response = await asanaClient.get(
-    `/sections/${process.env.IN_PROGRESS_SECTION_ID}/tasks`,
-    {
-      params: {
-        opt_fields: "gid,name,due_on,custom_fields", // Include custom_fields to fetch Priority and Extension Processed
-      },
-    }
-  );
-  return response.data.data as Task[];
+  return fetchTasksFromSection(process.env.IN_PROGRESS_SECTION_ID!, [
+    "gid",
+    "name",
+    "due_on",
+    "custom_fields", // Fetch Priority and Extension Processed
+  ]);
+};
+
+
+export const fetchTaskFromDefaultSection = async (): Promise<any[]> => {
+  return fetchTasksFromSection(process.env.DEFAULT_SECTION_ID!, [
+    "gid",
+    "name",
+    "custom_fields",
+    "due_on",
+  ]);
 };
 
 // Update a task's due date
@@ -97,19 +99,6 @@ export const filterTasksForUpdate = (
   );
 
   return filteredTasks;
-};
-
-export const fetchTaskFromDefaultSection = async (): Promise<any[]> => {
-  const response = await asanaClient.get(
-    `/sections/${process.env.DEFAULT_SECTION_ID}/tasks`,
-    {
-      params: {
-        opt_fields: "gid,name,custom_fields,due_on", // Include relevant fields
-      },
-    }
-  );
-
-  return response.data.data as any[];
 };
 
 export const fixTask = async (taskId: string): Promise<void> => {
