@@ -4,28 +4,44 @@ A Node.js API for managing tasks in Asana, built with Express.js, TypeScript, an
 
 ---
 
-## **Endpoints**
+## API Endpoints
 
-1. **POST** `/api/tasks`  
-Create a new task with a due date and priority.
+### Manual Verification (Optional, for Debugging)
 
-2. **PATCH** `/api/tasks/:id/progress`  
-   Move a task to the "In Progress" section and update due dates and extensions of other tasks if the moved task is of high priority.
+1. **POST** `/api/tasks`
 
-3. **PATCH** `/api/tasks/:id/priority`  
-   Update the priority of a specific task.
+   - Create a new task with a due date and priority.
+   - Triggered manually for task creation and verification.
 
-4. **PATCH** `/api/tasks/:id/fix`  
-   updates the task's extension in the default section.
+2. **GET** `/api/tasks/in-progress`
 
-5. **GET** `/api/tasks/in-progress`  
-   Retrieve all tasks currently in the "In Progress" section.
+   - Retrieve all tasks currently in the "In Progress" section.
+   - Triggered manually for verification of tasks in the "In Progress" section.
 
-6. **GET** `/api/tasks/:projectId`  
-   Fetch all tasks associated with a specific project.
+3. **GET** `/api/tasks/:projectId`
+   - Fetch all tasks associated with a specific project.
+   - Triggered manually for verification of tasks in a specific project.
 
-7. **PUT** `/api/tasks/:id/remove`  
-   if task is moved out of progress, this api updates it
+### Automated by Webhook (Triggered via Asana UI)
+
+1. **PATCH** `/api/tasks/:id/progress`
+
+   - Move a task to the "In Progress" section and update due dates and extensions if the task is high priority.
+   - Triggered when a user moves a task to the "In Progress" section in the **Asana UI**.
+
+2. **PATCH** `/api/tasks/:id/fix`
+
+   - Automatically add the extension as `True` when a task is created or moved in the default section without a priority.
+   - Triggered when a task is created or moved in the default section in the **Asana UI**.
+
+3. **PATCH** `/api/tasks/:id/priority`
+
+   - Automatically update the due date for a task in the default section based on the priority selected.
+   - Triggered when a user updates the priority of a task in the **Asana UI**.
+
+4. **PUT** `/api/tasks/:id/remove`
+   - When a task is moved out of the "In Progress" section, reduce the due dates for all tasks in the section by 2 days.
+   - Triggered when a task is moved out of the "In Progress" section in the **Asana UI**.
 
 ---
 
@@ -40,7 +56,7 @@ Ensure you have the following installed on your system:
 - **Environment Variables**:
 
   - Create a `.env` file in the root directory with the following:
-  - Refer the .env.example which was done through dotenv-safe.
+  - Refer the `.env.example` which was done through dotenv-safe.
 
   ```env
   ASANA_ACCESS_TOKEN=
@@ -322,24 +338,10 @@ Below are the required CURL commands to retrieve necessary details for configuri
 
 ---
 
-## **Outcome**
-
-The final solution:
-
-1. **Accurate Custom Field Management**:
-   Pre-attached fields to projects for efficient and consistent task creation.
-2. **Validated Workflows**:
-   Handles task creation and movement efficiently, including default behaviors for missing fields.
-3. **Improved Logging**:
-   Provides clear and meaningful logs for better transparency and debugging and is production-ready.
-4. **Optimized API Interactions**:
-   Filters and updates tasks only when necessary, improving performance and reducing redundant API calls using recursion.
-
----
 
 ## **Additional Improvements**
 
-I have added some improvements upon feedback:
+I have added some improvements upon feedback, Make sure the node server is running at all times.
 
 1. **Webhook Integration with ngrok**  
    Integrated webhooks using `ngrok` to expose a local server, enabling seamless communication between Asana and the application.
