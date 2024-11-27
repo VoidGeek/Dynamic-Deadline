@@ -338,10 +338,13 @@ Below are the required CURL commands to retrieve necessary details for configuri
 
 ---
 
-
 ## **Additional Improvements**
 
-I have added some improvements upon feedback, Make sure the node server is running at all times.
+I have added some improvements upon feedback.
+
+### Note
+
+Make sure the `server` is running at all times and only then complete the following steps.
 
 1. **Webhook Integration with ngrok**  
    Integrated webhooks using `ngrok` to expose a local server, enabling seamless communication between Asana and the application.
